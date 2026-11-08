@@ -22,6 +22,7 @@ dependencies {
     bundledModule("intellij.platform.smRunner")
     bundledModule("intellij.platform.testRunner")
     bundledModule("intellij.libraries.teamcity.service.messages")
+    bundledModule("intellij.platform.debugger.impl")
     bundledPlugin("org.jetbrains.plugins.textmate")
     localPlugin(project(":core"))
     testFramework(TestFrameworkType.Platform)

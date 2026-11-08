@@ -25,6 +25,7 @@ import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
 import dev.restudio.core.testing.DirectoryTestLocator
 import dev.restudio.core.testing.TestConsoles
 import dev.restudio.dotnet.DotnetBundle
+import dev.restudio.dotnet.debug.NetcoredbgAttachState
 import dev.restudio.dotnet.run.CSharpEntryPointDetector
 import dev.restudio.dotnet.sdk.DotnetSdk
 import java.nio.charset.StandardCharsets
@@ -35,7 +36,7 @@ import java.nio.file.Path
  * Runs .NET tests with `dotnet test` and shows the TRX results in the test tree.
  *
  * Debug starts `dotnet test` with `VSTEST_HOST_DEBUG=1` in [DotnetTestHostBeforeRunTaskProvider], and attaches
- * netcoredbg to the waiting test host through LSP4IJ (see [DotnetTestDebugState]).
+ * netcoredbg to the waiting test host through LSP4IJ (see [NetcoredbgAttachState]).
  */
 class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory, name: String) : DAPRunConfiguration(project, factory, name) {
   override fun getOptions(): DotnetTestRunConfigurationOptions = super.getOptions() as DotnetTestRunConfigurationOptions
@@ -60,7 +61,7 @@ class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
     if (executor.id == DefaultRunExecutor.EXECUTOR_ID) return DotnetTestRunState(environment, this)
     val testHost = environment.getUserData(DotnetTestHost.KEY) ?: throw ExecutionException(DotnetBundle.message("test.host.not.started"))
-    return DotnetTestDebugState.create(this, options, environment, testHost)
+    return NetcoredbgAttachState.create(this, options, environment, testHost.processId, testHost.handler, testHost.output)
   }
 
   /**

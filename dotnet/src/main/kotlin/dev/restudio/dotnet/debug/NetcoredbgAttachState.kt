@@ -1,4 +1,4 @@
-package dev.restudio.dotnet.test
+package dev.restudio.dotnet.debug
 
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.ExecutionResult
@@ -19,23 +19,36 @@ import com.redhat.devtools.lsp4ij.dap.DebugAdapterManager
 import com.redhat.devtools.lsp4ij.dap.DebugMode
 import com.redhat.devtools.lsp4ij.dap.client.DAPClient
 import com.redhat.devtools.lsp4ij.dap.configurations.DAPCommandLineState
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
 import com.redhat.devtools.lsp4ij.dap.descriptors.DefaultDebugAdapterDescriptor
 import com.redhat.devtools.lsp4ij.settings.ServerTrace
 import dev.restudio.dotnet.DotnetBundle
 
 /**
- * Attaches netcoredbg to a waiting test host.
+ * Attaches netcoredbg to a running .NET process.
  *
  * LSP4IJ has no mode for "start the adapter, then attach": its ATTACH mode connects to an adapter that already runs.
  * Thus the descriptor reports LAUNCH, so that LSP4IJ starts netcoredbg, but gives ATTACH to the DAP client,
  * so that the client sends `attach` with the process ID.
  */
-object DotnetTestDebugState {
-  fun create(configuration: DotnetTestRunConfiguration, options: RunConfigurationOptions, environment: ExecutionEnvironment, testHost: DotnetTestHost): DAPCommandLineState {
+object NetcoredbgAttachState {
+  /**
+   * [processId] is the target. [companion] is an optional process that belongs to the session, for example the
+   * `dotnet test` process of a waiting test host. The debug console shows its [companionOutput], and the end of the
+   * session stops it.
+   */
+  fun create(
+    configuration: DAPRunConfiguration,
+    options: RunConfigurationOptions,
+    environment: ExecutionEnvironment,
+    processId: Int,
+    companion: ProcessHandler? = null,
+    companionOutput: StringBuffer? = null,
+  ): DAPCommandLineState {
     val definition = DebugAdapterManager.getInstance().getDebugAdapterServerById(configuration.serverId)
                      ?: throw ExecutionException(DotnetBundle.message("netcoredbg.not.registered"))
     val descriptor = object : DefaultDebugAdapterDescriptor(options, environment, definition) {
-      override fun getDapParameters(): Map<String, Any> = mapOf("type" to "coreclr", "request" to "attach", "processId" to testHost.processId)
+      override fun getDapParameters(): Map<String, Any> = mapOf("type" to "coreclr", "request" to "attach", "processId" to processId)
 
       override fun getDebugMode(): DebugMode = DebugMode.LAUNCH
 
@@ -53,38 +66,41 @@ object DotnetTestDebugState {
     return object : DAPCommandLineState(descriptor, options, environment) {
       override fun startProcess(): ProcessHandler {
         val adapter = super.startProcess()
-        // When the debug session ends, the test host must not wait for a debugger any longer.
-        adapter.addProcessListener(object : ProcessListener {
-          override fun processTerminated(event: ProcessEvent) {
-            if (!testHost.handler.isProcessTerminated) testHost.handler.destroyProcess()
-          }
-        })
+        // When the debug session ends, a waiting test host must not wait any longer.
+        if (companion != null) {
+          adapter.addProcessListener(object : ProcessListener {
+            override fun processTerminated(event: ProcessEvent) {
+              if (!companion.isProcessTerminated) companion.destroyProcess()
+            }
+          })
+        }
         return adapter
       }
 
       override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
         val result = super.execute(executor, runner)
-        (result.executionConsole as? ConsoleView)?.let { console -> mirrorTestOutput(console, testHost) }
+        val console = result.executionConsole as? ConsoleView
+        if (console != null && companion != null && companionOutput != null) mirrorOutput(console, companion, companionOutput)
         return result
       }
     }
   }
 
   /**
-   * Shows the `dotnet test` text in the debug console: first the text so far, then each new part.
+   * Shows the text of [companion] in the debug console: first the text so far, then each new part.
    *
-   * It prints from [DotnetTestHost.output] up to its current end. Thus no text is lost or printed two times,
+   * It prints from [output] up to its current end. Thus no text is lost or printed two times,
    * also when new text comes while the listener is added.
    */
-  private fun mirrorTestOutput(console: ConsoleView, testHost: DotnetTestHost) {
+  private fun mirrorOutput(console: ConsoleView, companion: ProcessHandler, output: StringBuffer) {
     var printed = 0
     fun flush() {
-      val text = synchronized(testHost.output) {
-        testHost.output.substring(printed).also { printed = testHost.output.length }
+      val text = synchronized(output) {
+        output.substring(printed).also { printed = output.length }
       }
       if (text.isNotEmpty()) console.print(text, ConsoleViewContentType.NORMAL_OUTPUT)
     }
-    testHost.handler.addProcessListener(object : ProcessListener {
+    companion.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) = flush()
 
       override fun processTerminated(event: ProcessEvent) = flush()

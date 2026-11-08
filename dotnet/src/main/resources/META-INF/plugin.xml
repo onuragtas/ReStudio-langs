@@ -29,6 +29,8 @@
                                     implementationClass="dev.restudio.dotnet.run.CSharpLineMarkerProvider"/>
     <configurationType implementation="dev.restudio.dotnet.run.DotnetRunConfigurationType"/>
     <configurationType implementation="dev.restudio.dotnet.test.DotnetTestConfigurationType"/>
+    <configurationType implementation="dev.restudio.dotnet.debug.DotnetAttachConfigurationType"/>
+    <xdebugger.attachDebuggerProvider implementation="dev.restudio.dotnet.debug.DotnetAttachDebuggerProvider"/>
     <runConfigurationProducer implementation="dev.restudio.dotnet.run.DotnetRunConfigurationProducer"/>
     <runConfigurationProducer implementation="dev.restudio.dotnet.test.DotnetTestRunConfigurationProducer"/>
     <stepsBeforeRunProvider implementation="dev.restudio.dotnet.run.DotnetBuildBeforeRunTaskProvider"/>
