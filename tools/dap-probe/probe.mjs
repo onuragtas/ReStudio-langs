@@ -37,7 +37,9 @@ const command = subst(c.command);
 const launchArgs = subst(c.launch);
 
 const started = Date.now();
-const proc = spawn(command[0], command.slice(1), { cwd: root, env: { ...process.env, ...(c.env ?? {}) }, stdio: ['pipe', 'pipe', 'pipe'] });
+// adapterCwd: the working directory of the adapter process. The IDE does not always start it in the project.
+const adapterCwd = c.adapterCwd ? subst(c.adapterCwd) : root;
+const proc = spawn(command[0], command.slice(1), { cwd: adapterCwd, env: { ...process.env, ...(c.env ?? {}) }, stdio: ['pipe', 'pipe', 'pipe'] });
 let stderr = '', stdoutText = '';
 proc.stderr.on('data', d => { stderr = (stderr + d).slice(-20000); });
 let exited = null;

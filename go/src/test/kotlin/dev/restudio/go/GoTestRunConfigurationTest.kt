@@ -39,6 +39,7 @@ class GoTestRunConfigurationTest : BasePlatformTestCase() {
     assertEquals("Go test: TestBye", configuration.name)
     assertEquals("^TestBye$", configuration.testPattern)
     assertTrue(configuration.launchConfiguration.contains("\"mode\": \"test\""))
+    assertTrue(configuration.launchConfiguration, configuration.launchConfiguration.contains("\"dlvCwd\": "))
   }
 
   fun `test Run goes to the test tree and Debug goes to Delve`() {

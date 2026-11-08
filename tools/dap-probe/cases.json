@@ -157,5 +157,58 @@
     "stopTimeoutMs": 180000,
     "launchTimeoutMs": 180000,
     "endTimeoutMs": 90000
+  },
+  "delve-foreign-cwd": {
+    "root": "go",
+    "transport": "tcp",
+    "command": [
+      "${home}/go/bin/dlv",
+      "dap",
+      "--listen",
+      "127.0.0.1:${port}"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${root}/lib/greet",
+      "cwd": "${root}/lib/greet"
+    },
+    "breakpoint": {
+      "file": "lib/greet/greet.go",
+      "find": "if name =="
+    },
+    "expectVariable": "name",
+    "stopTimeoutMs": 120000,
+    "launchTimeoutMs": 300000,
+    "adapterCwd": "${home}"
+  },
+  "delve-dlvcwd": {
+    "root": "go",
+    "transport": "tcp",
+    "command": [
+      "${home}/go/bin/dlv",
+      "dap",
+      "--listen",
+      "127.0.0.1:${port}"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${root}/lib/greet",
+      "dlvCwd": "${root}/lib/greet",
+      "cwd": "${root}/lib/greet"
+    },
+    "breakpoint": {
+      "file": "lib/greet/greet.go",
+      "find": "if name =="
+    },
+    "expectVariable": "name",
+    "stopTimeoutMs": 120000,
+    "launchTimeoutMs": 300000,
+    "adapterCwd": "${home}"
   }
 }

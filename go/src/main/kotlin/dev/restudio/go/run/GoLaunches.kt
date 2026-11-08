@@ -9,6 +9,8 @@ import dev.restudio.go.GoBundle
 
 /** Builds the Delve launch for a Go entry point. */
 object GoLaunches {
+  // Delve runs "go build" and "go test -c" in its own working directory, not in "cwd".
+  // LSP4IJ does not start Delve in the project. Thus each launch sets "dlvCwd" to the package directory.
   /** Delve prints this line when its DAP server is ready. LSP4IJ reads the port from it. */
   private const val DELVE_READY_PATTERN = "DAP server listening at: \${address}:\${port}"
 
@@ -32,6 +34,7 @@ object GoLaunches {
           "mode" to "debug",
           "program" to packageDir,
           "cwd" to moduleRoot,
+          "dlvCwd" to packageDir,
         ),
         environment = environment,
       )
@@ -48,6 +51,7 @@ object GoLaunches {
           "mode" to "test",
           "program" to packageDir,
           "cwd" to packageDir,
+          "dlvCwd" to packageDir,
           "args" to listOf("-test.run", testPattern(entryPoint)),
         ),
         environment = environment,
