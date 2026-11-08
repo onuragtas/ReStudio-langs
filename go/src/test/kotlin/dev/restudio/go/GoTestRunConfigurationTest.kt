@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.redhat.devtools.lsp4ij.dap.DebugAdapterManager
 import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.entrypoints.EntryPointLocation
 import dev.restudio.core.sdk.ToolLocator
@@ -20,6 +21,12 @@ import java.nio.file.Path
 
 class GoTestRunConfigurationTest : BasePlatformTestCase() {
   private fun configurationForTest(name: String): GoTestRunConfiguration {
+    val configurations = contextForTest(name).configurationsFromContext.orEmpty().map { it.configuration }
+    assertEquals("one configuration from the context: $configurations", 1, configurations.size)
+    return configurations.single() as GoTestRunConfiguration
+  }
+
+  private fun contextForTest(name: String): ConfigurationContext {
     myFixture.configureByText("greet_test.go", "package greet\n\nimport \"testing\"\n\nfunc $name(t *testing.T) {}\n")
     val leaf = SyntaxTraverser.psiTraverser(myFixture.file).filter { it.firstChild == null }.single()
     val location = EntryPointLocation(leaf, EntryPoint(EntryPoint.Kind.TEST, name, myFixture.file.text.indexOf("func $name")))
@@ -29,9 +36,7 @@ class GoTestRunConfigurationTest : BasePlatformTestCase() {
       .add(CommonDataKeys.PSI_ELEMENT, leaf)
       .add(Location.DATA_KEY, location)
       .build()
-    val settings = ConfigurationContext.getFromContext(dataContext, "test").configuration
-    assertNotNull("no run configuration from the context", settings)
-    return settings!!.configuration as GoTestRunConfiguration
+    return ConfigurationContext.getFromContext(dataContext, "test")
   }
 
   fun `test the producer creates a Go test configuration`() {
@@ -51,6 +56,12 @@ class GoTestRunConfigurationTest : BasePlatformTestCase() {
     val commandLine = state.commandLine()
     assertEquals(listOf("test", "-json", "-run", "^TestBye$", "."), commandLine.parametersList.list)
     assertEquals(Path.of(configuration.workingDirectory), commandLine.workingDirectory)
+  }
+
+  fun `test a breakpoint can go on a line of a Go file`() {
+    val file = myFixture.configureByText("greet.go", "package greet\n\nfunc Hello() string {\n\treturn \"\"\n}\n").virtualFile
+    // LSP4IJ asks this in DAPBreakpointType.canPutAt.
+    assertTrue(DebugAdapterManager.getInstance().isDebuggableFile(file, project))
   }
 
   fun `test go test output on the sample project fills the tree`() {

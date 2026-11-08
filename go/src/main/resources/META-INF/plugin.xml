@@ -22,6 +22,9 @@
     <fileNamePatternMapping patterns="*.go"
                             serverId="restudio.gopls"
                             languageId="go"/>
+    <debugAdapterServer id="restudio.delve"
+                        name="Delve (ReStudio)"
+                        factoryClass="dev.restudio.go.debug.DelveDescriptorFactory"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
