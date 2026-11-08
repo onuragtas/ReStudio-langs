@@ -210,5 +210,29 @@
     "stopTimeoutMs": 120000,
     "launchTimeoutMs": 300000,
     "adapterCwd": "${home}"
+  },
+  "netcoredbg-attach-test": {
+    "root": "dotnet",
+    "command": [
+      "${home}/.restudio-dev/tools/netcoredbg/3.2.0-1092/netcoredbg/netcoredbg",
+      "--interpreter=vscode",
+      "--log=${home}/.restudio-dev/logs/netcoredbg-attach.log"
+    ],
+    "request": "attach",
+    "processIdEnv": "TESTHOST_PID",
+    "launch": {
+      "name": "probe",
+      "type": "coreclr",
+      "request": "attach"
+    },
+    "breakpoint": {
+      "file": "tests/Shop.Domain.Tests/ProductTests.cs",
+      "find": "var product = new Product"
+    },
+    "expectVariable": "this",
+    "env": {
+      "DOTNET_ROOT": "/opt/homebrew/opt/dotnet/libexec"
+    },
+    "stopTimeoutMs": 60000
   }
 }

@@ -41,5 +41,23 @@ object DotnetLaunches {
     )
   }
 
+  /**
+   * The netcoredbg settings for a test configuration. The attach target is known only at run time,
+   * so `DotnetTestDebugState` gives the process ID.
+   */
+  fun testAttach(project: DotnetProject, file: String): DapLaunch? {
+    val netcoredbg = DotnetSdk.netcoredbg() ?: return null
+    return DapLaunch(
+      adapterName = ADAPTER_NAME,
+      command = "$netcoredbg --interpreter=vscode",
+      readyPattern = null,
+      workingDirectory = project.directory.toString(),
+      file = file,
+      launch = jsonObject("type" to "coreclr", "request" to "attach"),
+      environment = DotnetSdk.environment(),
+      serverId = NetcoredbgDescriptorFactory.SERVER_ID,
+    )
+  }
+
   private const val ADAPTER_NAME = "netcoredbg"
 }

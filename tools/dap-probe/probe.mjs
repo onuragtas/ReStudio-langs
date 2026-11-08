@@ -35,6 +35,8 @@ const subst = v => JSON.parse(JSON.stringify(v ?? null)
   .replaceAll('${root}', root).replaceAll('${home}', process.env.HOME).replaceAll('${port}', String(port)));
 const command = subst(c.command);
 const launchArgs = subst(c.launch);
+// processIdEnv: the name of an environment variable with the PID for an attach request.
+if (c.processIdEnv) launchArgs.processId = Number(process.env[c.processIdEnv]);
 
 const started = Date.now();
 // adapterCwd: the working directory of the adapter process. The IDE does not always start it in the project.

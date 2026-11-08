@@ -1,6 +1,7 @@
 package dev.restudio.dotnet
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.RunConfiguration
@@ -27,6 +28,9 @@ import dev.restudio.dotnet.run.DotnetBuildBeforeRunTask
 import dev.restudio.dotnet.run.DotnetRunConfiguration
 import dev.restudio.dotnet.run.DotnetRunState
 import dev.restudio.dotnet.sdk.DotnetSdk
+import dev.restudio.dotnet.test.DotnetTestHost
+import dev.restudio.dotnet.test.DotnetTestHostBeforeRunTask
+import dev.restudio.dotnet.test.DotnetTestHostBeforeRunTaskProvider
 import dev.restudio.dotnet.test.DotnetTestLocator
 import dev.restudio.dotnet.test.DotnetTestRunConfiguration
 import dev.restudio.dotnet.test.DotnetTestRunState
@@ -90,7 +94,41 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     assertEquals(".NET test: Adds", configuration.name)
     assertEquals("FullyQualifiedName=Calc.Tests.MathTests.Adds", configuration.testFilter)
     assertFalse(configuration.canRun(DefaultRunExecutor.EXECUTOR_ID))
-    assertFalse(configuration.canRun(DEBUG_EXECUTOR_ID))
+    assertTrue(configuration.beforeRunTasks.single() is DotnetTestHostBeforeRunTask)
+    if (DotnetSdk.netcoredbg() == null) return
+    assertEquals(NetcoredbgDescriptorFactory.SERVER_ID, configuration.serverId)
+    assertTrue(configuration.canRun(DEBUG_EXECUTOR_ID))
+  }
+
+  fun `test the test host process ID line`() {
+    // Recorded from dotnet test with VSTEST_HOST_DEBUG=1 on the sample.
+    val output = "Host debugging is enabled. Please attach debugger to testhost process to continue.\nProcess Id: 45825, Name: dotnet\n"
+    assertEquals(45825, DotnetTestHost.processId(output))
+    assertNull(DotnetTestHost.processId("Host debugging is enabled."))
+  }
+
+  fun `test the debug step starts a waiting test host on the sample`() {
+    val debugExecutor = ExecutorRegistry.getInstance().getExecutorById(DEBUG_EXECUTOR_ID)
+    if (DotnetSdk.command() == null || debugExecutor == null) return
+    val configuration = configurations(addTests()).single() as DotnetTestRunConfiguration
+    configuration.projectFile = sample.resolve("tests/Shop.Domain.Tests/Shop.Domain.Tests.csproj").toString()
+    configuration.workingDirectory = sample.toString()
+    configuration.testFilter = "FullyQualifiedName=Shop.Domain.Tests.ProductTests.PriceWithTaxAddsTheRate"
+    val environment = ExecutionEnvironmentBuilder.create(debugExecutor, configuration).build()
+    val started = DotnetTestHostBeforeRunTaskProvider().executeTask(SimpleDataContext.getProjectContext(project), configuration, environment, DotnetTestHostBeforeRunTask())
+    val testHost = environment.getUserData(DotnetTestHost.KEY)
+    try {
+      assertTrue("the step failed", started)
+      assertNotNull(testHost)
+      // The test host waits for a debugger, so the process is still alive.
+      assertTrue(ProcessHandle.of(testHost!!.processId.toLong()).map { it.isAlive }.orElse(false))
+      assertFalse(testHost.handler.isProcessTerminated)
+    }
+    finally {
+      testHost?.handler?.destroyProcess()
+      testHost?.handler?.waitFor(30_000)
+      testHost?.let { ProcessHandle.of(it.processId.toLong()).ifPresent(ProcessHandle::destroy) }
+    }
   }
 
   fun `test the locator finds a test in a subdirectory`() {

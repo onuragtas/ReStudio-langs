@@ -36,8 +36,8 @@ import java.nio.file.Path
 /**
  * Runs .NET tests with `dotnet test` and shows the TRX results in the test tree.
  *
- * Debug is not supported yet. It needs `VSTEST_HOST_DEBUG` and a netcoredbg attach. Thus [canRun] is `false` for
- * the LSP4IJ debug runner. The parent class keeps the DAP settings for that later step.
+ * Debug starts `dotnet test` with `VSTEST_HOST_DEBUG=1` in [DotnetTestHostBeforeRunTaskProvider], and attaches
+ * netcoredbg to the waiting test host through LSP4IJ (see [DotnetTestDebugState]).
  */
 class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory, name: String) : DAPRunConfiguration(project, factory, name) {
   override fun getOptions(): DotnetTestRunConfigurationOptions = super.getOptions() as DotnetTestRunConfigurationOptions
@@ -56,10 +56,34 @@ class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory
       options.testFilter = value
     }
 
-  override fun canRun(executorId: String): Boolean = false
+  /** The LSP4IJ debug runner asks this. Return `false` for Run, so that the default runner uses [getState]. */
+  override fun canRun(executorId: String): Boolean = executorId != DefaultRunExecutor.EXECUTOR_ID && super.canRun(executorId)
 
-  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? =
-    if (executor.id == DefaultRunExecutor.EXECUTOR_ID) DotnetTestRunState(environment, this) else null
+  override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
+    if (executor.id == DefaultRunExecutor.EXECUTOR_ID) return DotnetTestRunState(environment, this)
+    val testHost = environment.getUserData(DotnetTestHost.KEY) ?: throw ExecutionException(DotnetBundle.message("test.host.not.started"))
+    return DotnetTestDebugState.create(this, options, environment, testHost)
+  }
+
+  /**
+   * The `dotnet test` command. It writes the TRX file `restudio.trx` to [resultsDirectory].
+   * With [hostDebug], the test host waits for a debugger and prints its process ID.
+   */
+  fun testCommandLine(resultsDirectory: Path, hostDebug: Boolean = false): GeneralCommandLine {
+    val dotnet = DotnetSdk.command() ?: throw ExecutionException(DotnetBundle.message("dotnet.not.found"))
+    val commandLine = GeneralCommandLine(dotnet.toString(), "test", projectFile, "--logger", "trx;LogFileName=$TRX_NAME", "--results-directory", resultsDirectory.toString())
+    if (testFilter.isNotEmpty()) commandLine.addParameters("--filter", testFilter)
+    val environment = DotnetSdk.environment().toMutableMap()
+    if (hostDebug) environment["VSTEST_HOST_DEBUG"] = "1"
+    return commandLine
+      .withWorkingDirectory(Path.of(workingDirectory))
+      .withEnvironment(environment)
+      .withCharset(StandardCharsets.UTF_8)
+  }
+
+  companion object {
+    const val TRX_NAME: String = "restudio.trx"
+  }
 }
 
 class DotnetTestRunConfigurationOptions : DAPRunConfigurationOptions() {
@@ -72,15 +96,7 @@ val DotnetTestLocator: DirectoryTestLocator = DirectoryTestLocator("dotnettest",
 
 /** Starts `dotnet test` with a TRX logger. When the process ends, it sends the TRX results to the test tree. */
 class DotnetTestRunState(environment: ExecutionEnvironment, private val configuration: DotnetTestRunConfiguration) : CommandLineState(environment) {
-  fun commandLine(resultsDirectory: Path): GeneralCommandLine {
-    val dotnet = DotnetSdk.command() ?: throw ExecutionException(DotnetBundle.message("dotnet.not.found"))
-    val commandLine = GeneralCommandLine(dotnet.toString(), "test", configuration.projectFile, "--logger", "trx;LogFileName=$TRX_NAME", "--results-directory", resultsDirectory.toString())
-    if (configuration.testFilter.isNotEmpty()) commandLine.addParameters("--filter", configuration.testFilter)
-    return commandLine
-      .withWorkingDirectory(Path.of(configuration.workingDirectory))
-      .withEnvironment(DotnetSdk.environment())
-      .withCharset(StandardCharsets.UTF_8)
-  }
+  fun commandLine(resultsDirectory: Path): GeneralCommandLine = configuration.testCommandLine(resultsDirectory)
 
   public override fun startProcess(): KillableColoredProcessHandler {
     val resultsDirectory = Files.createTempDirectory("restudio-trx")
@@ -88,7 +104,7 @@ class DotnetTestRunState(environment: ExecutionEnvironment, private val configur
     val handler = object : KillableColoredProcessHandler(commandLine(resultsDirectory)) {
       override fun onOSProcessTerminated(exitCode: Int) {
         try {
-          val trx = resultsDirectory.resolve(TRX_NAME)
+          val trx = resultsDirectory.resolve(DotnetTestRunConfiguration.TRX_NAME)
           if (Files.isRegularFile(trx)) {
             TrxReport.messages(Files.readString(trx)) { className, method -> DotnetTestLocator.hint(projectDirectory, "$className.$method") }
               .forEach { notifyTextAvailable(it.toString() + "\n", ProcessOutputTypes.STDOUT) }
@@ -120,7 +136,6 @@ class DotnetTestRunState(environment: ExecutionEnvironment, private val configur
 
   private companion object {
     const val FRAMEWORK_NAME = "DotnetTest"
-    const val TRX_NAME = "restudio.trx"
     val LOG = logger<DotnetTestRunState>()
   }
 }
