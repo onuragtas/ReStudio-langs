@@ -62,7 +62,7 @@ class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState? {
     if (executor.id == DefaultRunExecutor.EXECUTOR_ID) return DotnetTestRunState(environment, this)
-    val testHost = environment.getUserData(DotnetTestHost.KEY) ?: throw ExecutionException(DotnetBundle.message("test.host.not.started"))
+    val testHost = DotnetTestHost.take(environment) ?: throw ExecutionException(DotnetBundle.message("test.host.not.started"))
     return NetcoredbgAttachState.create(this, options, environment, testHost.processId, testHost.handler, testHost.output)
   }
 

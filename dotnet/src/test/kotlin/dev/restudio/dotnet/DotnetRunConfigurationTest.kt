@@ -115,8 +115,11 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     configuration.workingDirectory = sample.toString()
     configuration.testFilter = "FullyQualifiedName=Shop.Domain.Tests.ProductTests.PriceWithTaxAddsTheRate"
     val environment = ExecutionEnvironmentBuilder.create(debugExecutor, configuration).build()
-    val started = DotnetTestHostBeforeRunTaskProvider().executeTask(SimpleDataContext.getProjectContext(project), configuration, environment, DotnetTestHostBeforeRunTask())
-    val testHost = environment.getUserData(DotnetTestHost.KEY)
+    environment.assignNewExecutionId()
+    // The platform runs a before-run step with a copy of the environment (ExecutionManagerImpl.compileAndRun).
+    val taskEnvironment = ExecutionEnvironmentBuilder(environment).build().also { it.executionId = environment.executionId }
+    val started = DotnetTestHostBeforeRunTaskProvider().executeTask(SimpleDataContext.getProjectContext(project), configuration, taskEnvironment, DotnetTestHostBeforeRunTask())
+    val testHost = DotnetTestHost.take(environment)
     try {
       assertTrue("the step failed", started)
       assertNotNull(testHost)

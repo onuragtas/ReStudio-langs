@@ -16,6 +16,7 @@ import dev.restudio.dotnet.DotnetBundle
 import dev.restudio.dotnet.run.DotnetBuildBeforeRunTaskProvider
 import java.nio.file.Files
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeoutException
 
@@ -26,7 +27,20 @@ import java.util.concurrent.TimeoutException
  */
 class DotnetTestHost(val processId: Int, val handler: KillableColoredProcessHandler, val output: StringBuffer) {
   companion object {
-    val KEY: Key<DotnetTestHost> = Key.create("RestudioDotnetTestHost")
+    /**
+     * The test hosts of the starting debug sessions, by execution ID.
+     *
+     * The platform gives each before-run step a copy of the execution environment, so user data on it does not reach
+     * the environment of the run. The copy has the same execution ID.
+     */
+    private val started = ConcurrentHashMap<Long, DotnetTestHost>()
+
+    fun put(environment: ExecutionEnvironment, testHost: DotnetTestHost) {
+      started.put(environment.executionId, testHost)?.handler?.destroyProcess()
+    }
+
+    /** Returns and forgets the test host of the run. */
+    fun take(environment: ExecutionEnvironment): DotnetTestHost? = started.remove(environment.executionId)
 
     /** The test host prints `Process Id: 45825, Name: dotnet` when `VSTEST_HOST_DEBUG=1`. */
     private val PROCESS_ID = Regex("""Process Id:\s*(\d+)""")
@@ -87,7 +101,14 @@ class DotnetTestHostBeforeRunTaskProvider : BeforeRunTaskProvider<DotnetTestHost
         .notify(environment.project)
       return false
     }
-    environment.putUserData(DotnetTestHost.KEY, DotnetTestHost(id, handler, output))
+    val testHost = DotnetTestHost(id, handler, output)
+    DotnetTestHost.put(environment, testHost)
+    // When the run never starts, the test host must not wait for ever.
+    handler.addProcessListener(object : ProcessListener {
+      override fun processTerminated(event: ProcessEvent) {
+        DotnetTestHost.take(environment)
+      }
+    })
     return true
   }
 
