@@ -234,5 +234,37 @@
       "DOTNET_ROOT": "/opt/homebrew/opt/dotnet/libexec"
     },
     "stopTimeoutMs": 60000
+  },
+  "php-debug-phpunit": {
+    "root": "php",
+    "command": [
+      "node",
+      "${home}/.restudio-dev/tools/php-debug/1.40.2/vsix/extension/out/phpDebug.js"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "php",
+      "request": "launch",
+      "program": "${root}/vendor/bin/phpunit",
+      "cwd": "${root}",
+      "port": 9003,
+      "runtimeExecutable": "/opt/homebrew/bin/php",
+      "externalConsole": false,
+      "runtimeArgs": [
+        "-dxdebug.mode=debug",
+        "-dxdebug.start_with_request=yes",
+        "-dxdebug.client_port=9003"
+      ],
+      "args": [
+        "tests/Unit/ExampleTest.php",
+        "--filter",
+        "/::test_that_true_is_true(\\s|$)/"
+      ]
+    },
+    "breakpoint": {
+      "file": "tests/Unit/ExampleTest.php",
+      "find": "$this->assertTrue(true);"
+    },
+    "expectVariable": "$this"
   }
 }

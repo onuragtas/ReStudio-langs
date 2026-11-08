@@ -1,0 +1,38 @@
+<idea-plugin>
+  <id>dev.restudio.php</id>
+  <name>ReStudio PHP</name>
+  <vendor>ReStudio</vendor>
+  <description><![CDATA[
+    PHP support through Phpactor, Xdebug and PHPUnit: code insight, run and debug gutter icons for scripts and tests,
+    and the PHPUnit test tree.
+  ]]></description>
+
+  <resource-bundle>messages.PhpBundle</resource-bundle>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+  <depends>dev.restudio.core</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server id="restudio.phpactor"
+            name="Phpactor (ReStudio)"
+            factoryClass="dev.restudio.php.lsp.PhpactorServerFactory"/>
+    <fileNamePatternMapping patterns="*.php"
+                            serverId="restudio.phpactor"
+                            languageId="php"/>
+    <debugAdapterServer id="restudio.php-debug"
+                        name="php-debug (ReStudio)"
+                        factoryClass="dev.restudio.php.debug.PhpDebugDescriptorFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="textmate"
+                                    implementationClass="dev.restudio.php.run.PhpLineMarkerProvider"/>
+    <pluginAdvertiserSuppressor implementation="dev.restudio.php.ide.PhpAdvertiserSuppressor"/>
+    <configurationType implementation="dev.restudio.php.run.PhpScriptConfigurationType"/>
+    <configurationType implementation="dev.restudio.php.test.PhpUnitConfigurationType"/>
+    <runConfigurationProducer implementation="dev.restudio.php.run.PhpScriptRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.php.test.PhpUnitRunConfigurationProducer"/>
+  </extensions>
+</idea-plugin>

@@ -19,6 +19,8 @@ object TestConsoles {
    * Creates the test console for [processHandler] and attaches it.
    *
    * [translator] creates a new translator for each run. [locator] finds the source of a test from its location hint.
+   * [idBased] selects the tree mode. A translator writes ID-based messages. A runner that writes TeamCity messages
+   * by itself, such as `phpunit --teamcity`, uses the name-based mode.
    */
   fun attach(
     frameworkName: String,
@@ -26,6 +28,7 @@ object TestConsoles {
     executor: Executor,
     processHandler: ProcessHandler,
     locator: SMTestLocator?,
+    idBased: Boolean = true,
     translator: () -> TestEventTranslator,
   ): ConsoleView {
     val properties = object : SMTRunnerConsoleProperties(configuration, frameworkName, executor), SMCustomMessagesParsing {
@@ -34,7 +37,7 @@ object TestConsoles {
 
       override fun getTestLocator(): SMTestLocator? = locator
     }
-    properties.isIdBasedTestTree = true
+    properties.isIdBasedTestTree = idBased
     return SMTestRunnerConnectionUtil.createAndAttachConsole(frameworkName, processHandler, properties)
   }
 }

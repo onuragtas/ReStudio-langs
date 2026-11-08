@@ -7,4 +7,4 @@ pluginManagement {
   }
 }
 
-include("core", "go", "dotnet")
+include("core", "go", "dotnet", "php")
