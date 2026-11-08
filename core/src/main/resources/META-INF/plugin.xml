@@ -9,4 +9,9 @@
 
   <depends>com.intellij.modules.platform</depends>
   <depends>com.redhat.devtools.lsp4ij</depends>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <editorNotificationProvider implementation="dev.restudio.core.ide.FilteredLanguageServerSuggestionProvider"/>
+    <postStartupActivity implementation="dev.restudio.core.ide.LanguageServerSuggestionFilterActivity"/>
+  </extensions>
 </idea-plugin>

@@ -18,6 +18,12 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.ui.EditorNotificationProvider
+import com.redhat.devtools.lsp4ij.ui.LanguageServerSuggestionEditorNotificationProvider
+import dev.restudio.core.ide.FileExtensionAdvertiserSuppressor
+import dev.restudio.core.ide.FilteredLanguageServerSuggestionProvider
+import dev.restudio.core.ide.LanguageServerSuggestionFilterActivity
+import kotlinx.coroutines.runBlocking
 import dev.restudio.core.entrypoints.EntryPointLineMarkerInfo
 import dev.restudio.core.entrypoints.EntryPointLocation
 import dev.restudio.core.testing.FileLineLocator
@@ -92,6 +98,15 @@ class WebRunConfigurationTest : BasePlatformTestCase() {
     val location = FileLineLocator.getLocation("file", hint, project, GlobalSearchScope.filesScope(project, listOf(file))).single()
     val text = String(file.contentsToByteArray())
     assertEquals(text.indexOf("it('adds the prices'"), location.openFileDescriptor!!.offset)
+  }
+
+  fun `test the LSP4IJ server suggestion is replaced by the filtered one`() {
+    runBlocking { LanguageServerSuggestionFilterActivity().execute(project) }
+    val providers = EditorNotificationProvider.EP_NAME.getExtensions(project)
+    assertFalse(providers.any { it is LanguageServerSuggestionEditorNotificationProvider })
+    assertTrue(providers.any { it is FilteredLanguageServerSuggestionProvider })
+    assertTrue(FileExtensionAdvertiserSuppressor.isReStudioFile(sampleFile("vue/src/lib/total.ts")))
+    assertFalse(FileExtensionAdvertiserSuppressor.isReStudioFile(myFixture.addFileToProject("main.rs", "").virtualFile))
   }
 
   fun `test Angular and Tailwind start only in their projects`() {
