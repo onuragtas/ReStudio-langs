@@ -24,8 +24,6 @@ import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
 import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
 import dev.restudio.core.testing.DirectoryTestLocator
 import dev.restudio.core.testing.TestConsoles
-import dev.restudio.core.testing.TestEventTranslator
-import dev.restudio.core.testing.TestOutput
 import dev.restudio.dotnet.DotnetBundle
 import dev.restudio.dotnet.run.CSharpEntryPointDetector
 import dev.restudio.dotnet.sdk.DotnetSdk
@@ -71,7 +69,13 @@ class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory
    */
   fun testCommandLine(resultsDirectory: Path, hostDebug: Boolean = false): GeneralCommandLine {
     val dotnet = DotnetSdk.command() ?: throw ExecutionException(DotnetBundle.message("dotnet.not.found"))
-    val commandLine = GeneralCommandLine(dotnet.toString(), "test", projectFile, "--logger", "trx;LogFileName=$TRX_NAME", "--results-directory", resultsDirectory.toString())
+    // The console logger gives a result row for each test as the run goes. The TRX file is the fallback.
+    val commandLine = GeneralCommandLine(
+      dotnet.toString(), "test", projectFile,
+      "--logger", "console;verbosity=normal",
+      "--logger", "trx;LogFileName=$TRX_NAME",
+      "--results-directory", resultsDirectory.toString(),
+    )
     if (testFilter.isNotEmpty()) commandLine.addParameters("--filter", testFilter)
     val environment = DotnetSdk.environment().toMutableMap()
     if (hostDebug) environment["VSTEST_HOST_DEBUG"] = "1"
@@ -94,18 +98,25 @@ class DotnetTestRunConfigurationOptions : DAPRunConfigurationOptions() {
 /** Finds a C# test from the hint `dotnettest://<project directory>#<Namespace.Class.Method>`. */
 val DotnetTestLocator: DirectoryTestLocator = DirectoryTestLocator("dotnettest", CSharpEntryPointDetector, recursive = true) { it.endsWith(".cs") }
 
-/** Starts `dotnet test` with a TRX logger. When the process ends, it sends the TRX results to the test tree. */
+/**
+ * Starts `dotnet test` and fills the test tree from the console result rows (see [DotnetConsoleTranslator]).
+ * When the console has no result row, for example in another language, the TRX results fill the tree at the end.
+ */
 class DotnetTestRunState(environment: ExecutionEnvironment, private val configuration: DotnetTestRunConfiguration) : CommandLineState(environment) {
   fun commandLine(resultsDirectory: Path): GeneralCommandLine = configuration.testCommandLine(resultsDirectory)
 
+  private val projectDirectory = Path.of(configuration.projectFile).parent.toString()
+
+  /** The test console feeds each output line to it. */
+  val translator: DotnetConsoleTranslator = DotnetConsoleTranslator { className, method -> DotnetTestLocator.hint(projectDirectory, "$className.$method") }
+
   public override fun startProcess(): KillableColoredProcessHandler {
     val resultsDirectory = Files.createTempDirectory("restudio-trx")
-    val projectDirectory = Path.of(configuration.projectFile).parent.toString()
     val handler = object : KillableColoredProcessHandler(commandLine(resultsDirectory)) {
       override fun onOSProcessTerminated(exitCode: Int) {
         try {
           val trx = resultsDirectory.resolve(DotnetTestRunConfiguration.TRX_NAME)
-          if (Files.isRegularFile(trx)) {
+          if (!translator.sawResults && Files.isRegularFile(trx)) {
             TrxReport.messages(Files.readString(trx)) { className, method -> DotnetTestLocator.hint(projectDirectory, "$className.$method") }
               .forEach { notifyTextAvailable(it.toString() + "\n", ProcessOutputTypes.STDOUT) }
           }
@@ -125,13 +136,8 @@ class DotnetTestRunState(environment: ExecutionEnvironment, private val configur
 
   override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
     val handler = startProcess()
-    // The console shows the dotnet test output as it is. The tree comes from the TRX lines at the end.
-    val console = TestConsoles.attach(FRAMEWORK_NAME, configuration, executor, handler, DotnetTestLocator) { PlainOutput }
+    val console = TestConsoles.attach(FRAMEWORK_NAME, configuration, executor, handler, DotnetTestLocator) { translator }
     return DefaultExecutionResult(console, handler, *createActions(console, handler, executor))
-  }
-
-  private object PlainOutput : TestEventTranslator {
-    override fun translate(line: String): List<TestOutput>? = null
   }
 
   private companion object {

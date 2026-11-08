@@ -150,7 +150,7 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     assertEquals(RoslynWorkspace.Solution(sample.resolve("Shop.sln")), RoslynWorkspace.find(sample))
   }
 
-  fun `test dotnet test on the sample sends the TRX results`() {
+  fun `test dotnet test on the sample prints a result row for each test`() {
     if (DotnetSdk.command() == null) return
     val configuration = configurations(addTests()).single() as DotnetTestRunConfiguration
     configuration.projectFile = sample.resolve("tests/Shop.Domain.Tests/Shop.Domain.Tests.csproj").toString()
@@ -163,14 +163,16 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     handler.addProcessListener(object : ProcessListener {
       override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
         synchronized(output) { output.append(event.text) }
+        // The test console does this in a real run.
+        event.text.lines().forEach { state.translator.translate(it) }
       }
     })
     handler.startNotify()
     assertTrue("dotnet test did not end", handler.waitFor(TimeUnit.MINUTES.toMillis(3)))
     val text = synchronized(output) { output.toString() }
-    assertTrue(text, text.contains("##teamcity[testStarted name='PriceWithTaxAddsTheRate'"))
-    assertTrue(text, text.contains("##teamcity[testFinished name='PriceWithTaxAddsTheRate'"))
-    assertFalse(text, text.contains("##teamcity[testFailed"))
+    // The console logger gives the live result row. Thus the TRX fallback adds no message at the end.
+    assertTrue(text, text.contains("  Passed Shop.Domain.Tests.ProductTests.PriceWithTaxAddsTheRate ["))
+    assertFalse(text, text.contains("##teamcity["))
   }
 }
 

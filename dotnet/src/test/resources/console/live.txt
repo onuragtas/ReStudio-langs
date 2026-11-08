@@ -1,0 +1,44 @@
+  Determining projects to restore...
+  Restored /work/src/Shop.Domain/Shop.Domain.csproj (in 46 ms).
+  Restored /work/tests/Shop.Domain.Tests/Shop.Domain.Tests.csproj (in 1,37 sec).
+  Shop.Domain -> /work/src/Shop.Domain/bin/Debug/net10.0/Shop.Domain.dll
+  Shop.Domain.Tests -> /work/tests/Shop.Domain.Tests/bin/Debug/net10.0/Shop.Domain.Tests.dll
+Test run for /work/tests/Shop.Domain.Tests/bin/Debug/net10.0/Shop.Domain.Tests.dll (.NETCoreApp,Version=v10.0)
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.4+50e68bbb8b (64-bit .NET 10.0.14)
+[xUnit.net 00:00:00.05]   Discovering: Shop.Domain.Tests
+[xUnit.net 00:00:00.07]   Discovered:  Shop.Domain.Tests
+[xUnit.net 00:00:00.09]   Starting:    Shop.Domain.Tests
+[xUnit.net 00:00:00.10]     Shop.Domain.Tests.LiveProbeTests.Skipped [SKIP]
+[xUnit.net 00:00:00.10]       not now
+value 2
+value 1
+[xUnit.net 00:00:00.12]     Shop.Domain.Tests.LiveProbeTests.Fails [FAIL]
+[xUnit.net 00:00:00.12]       Assert.Equal() Failure: Values differ
+[xUnit.net 00:00:00.12]       Expected: 1
+[xUnit.net 00:00:00.12]       Actual:   2
+[xUnit.net 00:00:00.12]       Stack Trace:
+[xUnit.net 00:00:00.12]         /work/tests/Shop.Domain.Tests/LiveProbeTests.cs(8,0): at Shop.Domain.Tests.LiveProbeTests.Fails()
+[xUnit.net 00:00:00.12]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.12]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.12]   Finished:    Shop.Domain.Tests
+  Skipped Shop.Domain.Tests.LiveProbeTests.Skipped [1 ms]
+  Passed Shop.Domain.Tests.ProductTests.PriceWithTaxAddsTheRate [5 ms]
+  Passed Shop.Domain.Tests.LiveProbeTests.Positive(value: 2) [4 ms]
+  Passed Shop.Domain.Tests.LiveProbeTests.Positive(value: 1) [< 1 ms]
+  Failed Shop.Domain.Tests.LiveProbeTests.Fails [2 ms]
+  Error Message:
+   Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   2
+  Stack Trace:
+     at Shop.Domain.Tests.LiveProbeTests.Fails() in /work/tests/Shop.Domain.Tests/LiveProbeTests.cs:line 8
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Test Run Failed.
+Total tests: 5
+     Passed: 3
+     Failed: 1
+    Skipped: 1
+ Total time: 0,5045 Seconds
