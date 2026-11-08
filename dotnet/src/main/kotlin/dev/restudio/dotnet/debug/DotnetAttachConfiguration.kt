@@ -30,7 +30,8 @@ class DotnetAttachConfiguration(project: Project, factory: ConfigurationFactory,
 
   override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState {
     if (executor.id == DefaultRunExecutor.EXECUTOR_ID || processId <= 0) throw ExecutionException(DotnetBundle.message("attach.debug.only"))
-    return NetcoredbgAttachState.create(this, options, environment, processId)
+    val target = NetcoredbgAttachState.Target(processId)
+    return NetcoredbgAttachState.create(this, options, environment) { target }
   }
 }
 

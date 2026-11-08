@@ -33,22 +33,28 @@ import dev.restudio.dotnet.DotnetBundle
  */
 object NetcoredbgAttachState {
   /**
-   * [processId] is the target. [companion] is an optional process that belongs to the session, for example the
+   * The process to attach to. [companion] is an optional process that belongs to the session, for example the
    * `dotnet test` process of a waiting test host. The debug console shows its [companionOutput], and the end of the
    * session stops it.
+   */
+  class Target(val processId: Int, val companion: ProcessHandler? = null, val companionOutput: StringBuffer? = null)
+
+  /**
+   * The platform asks for the state before it runs the before-run steps (`AsyncProgramRunner.execute`).
+   * A test host starts in such a step, so the state reads [target] only when the session starts:
+   * for the DAP parameters, the adapter process and the console. [target] is called one time.
    */
   fun create(
     configuration: DAPRunConfiguration,
     options: RunConfigurationOptions,
     environment: ExecutionEnvironment,
-    processId: Int,
-    companion: ProcessHandler? = null,
-    companionOutput: StringBuffer? = null,
+    target: () -> Target,
   ): DAPCommandLineState {
+    val resolved = lazy(target)
     val definition = DebugAdapterManager.getInstance().getDebugAdapterServerById(configuration.serverId)
                      ?: throw ExecutionException(DotnetBundle.message("netcoredbg.not.registered"))
     val descriptor = object : DefaultDebugAdapterDescriptor(options, environment, definition) {
-      override fun getDapParameters(): Map<String, Any> = mapOf("type" to "coreclr", "request" to "attach", "processId" to processId)
+      override fun getDapParameters(): Map<String, Any> = mapOf("type" to "coreclr", "request" to "attach", "processId" to resolved.value.processId)
 
       override fun getDebugMode(): DebugMode = DebugMode.LAUNCH
 
@@ -65,6 +71,7 @@ object NetcoredbgAttachState {
     }
     return object : DAPCommandLineState(descriptor, options, environment) {
       override fun startProcess(): ProcessHandler {
+        val companion = resolved.value.companion
         val adapter = super.startProcess()
         // When the debug session ends, a waiting test host must not wait any longer.
         if (companion != null) {
@@ -80,7 +87,8 @@ object NetcoredbgAttachState {
       override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
         val result = super.execute(executor, runner)
         val console = result.executionConsole as? ConsoleView
-        if (console != null && companion != null && companionOutput != null) mirrorOutput(console, companion, companionOutput)
+        val (companion, output) = resolved.value.let { it.companion to it.companionOutput }
+        if (console != null && companion != null && output != null) mirrorOutput(console, companion, output)
         return result
       }
     }

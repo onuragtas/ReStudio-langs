@@ -1,8 +1,10 @@
 package dev.restudio.dotnet
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.codeInsight.daemon.LineMarkerProviders
 import com.intellij.execution.ExecutorRegistry
 import com.intellij.execution.Location
+import com.redhat.devtools.lsp4ij.dap.configurations.DAPCommandLineState
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
@@ -74,6 +76,15 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     assertEquals(listOf("Calc.Tests.MathTests.Adds" to 5), markers(addTests()).map { it.entryPoint.name to myFixture.editor.document.getLineNumber(it.startOffset) })
   }
 
+  fun `test a marker on the test of the sample file`() {
+    myFixture.addFileToProject("Shop.Domain.Tests/Shop.Domain.Tests.csproj", "<Project Sdk=\"Microsoft.NET.Sdk\"></Project>")
+    val text = java.nio.file.Files.readString(sample.resolve("tests/Shop.Domain.Tests/ProductTests.cs"))
+    val file = myFixture.addFileToProject("Shop.Domain.Tests/ProductTests.cs", text)
+    // The platform gives *.cs its built-in "C#" custom file type. The provider must be registered for that language.
+    assertTrue(file.language.id, LineMarkerProviders.getInstance().allForLanguage(file.language).any { it is CSharpLineMarkerProvider })
+    assertEquals(listOf("Shop.Domain.Tests.ProductTests.PriceWithTaxAddsTheRate" to 7), markers(file).map { it.entryPoint.name to myFixture.editor.document.getLineNumber(it.startOffset) })
+  }
+
   fun `test the app producer creates a netcoredbg launch after a build`() {
     val configuration = configurations(addApp()).single() as DotnetRunConfiguration
     assertEquals(".NET: Tool", configuration.name)
@@ -116,21 +127,23 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     configuration.testFilter = "FullyQualifiedName=Shop.Domain.Tests.ProductTests.PriceWithTaxAddsTheRate"
     val environment = ExecutionEnvironmentBuilder.create(debugExecutor, configuration).build()
     environment.assignNewExecutionId()
-    // The platform runs a before-run step with a copy of the environment (ExecutionManagerImpl.compileAndRun).
+    // The platform order: AsyncProgramRunner.execute gets the state first. Then ExecutionManagerImpl.compileAndRun runs
+    // the before-run steps, each with a copy of the environment. Then the session starts.
+    val state = environment.state as DAPCommandLineState
     val taskEnvironment = ExecutionEnvironmentBuilder(environment).build().also { it.executionId = environment.executionId }
     val started = DotnetTestHostBeforeRunTaskProvider().executeTask(SimpleDataContext.getProjectContext(project), configuration, taskEnvironment, DotnetTestHostBeforeRunTask())
-    val testHost = DotnetTestHost.take(environment)
+    val processId = if (started) state.dapParameters["processId"] as Int else null
+    val testHost = processId?.let { ProcessHandle.of(it.toLong()).orElse(null) }
     try {
       assertTrue("the step failed", started)
-      assertNotNull(testHost)
+      assertEquals("attach", state.dapParameters["request"])
       // The test host waits for a debugger, so the process is still alive.
-      assertTrue(ProcessHandle.of(testHost!!.processId.toLong()).map { it.isAlive }.orElse(false))
-      assertFalse(testHost.handler.isProcessTerminated)
+      assertTrue(testHost?.isAlive == true)
     }
     finally {
-      testHost?.handler?.destroyProcess()
-      testHost?.handler?.waitFor(30_000)
-      testHost?.let { ProcessHandle.of(it.processId.toLong()).ifPresent(ProcessHandle::destroy) }
+      testHost?.parent()?.ifPresent { it.descendants().forEach(ProcessHandle::destroy) }
+      testHost?.destroy()
+      ProcessHandle.current().descendants().filter { it.info().commandLine().orElse("").contains("Shop.Domain.Tests") }.forEach(ProcessHandle::destroy)
     }
   }
 

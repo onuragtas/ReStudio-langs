@@ -27,6 +27,10 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij">
+    <!-- The platform maps *.cs to its built-in "C#" custom file type (defaultFileTypes.xml), whose language is TEXT.
+         A *.csx or *.cake file goes to TextMate. -->
+    <codeInsight.lineMarkerProvider language="TEXT"
+                                    implementationClass="dev.restudio.dotnet.run.CSharpLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="textmate"
                                     implementationClass="dev.restudio.dotnet.run.CSharpLineMarkerProvider"/>
     <configurationType implementation="dev.restudio.dotnet.run.DotnetRunConfigurationType"/>
