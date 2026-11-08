@@ -15,7 +15,10 @@ import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.entrypoints.EntryPointLocation
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.go.debug.DelveDescriptorFactory
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.psi.search.GlobalSearchScope
 import dev.restudio.go.test.GoTestJsonTranslator
+import dev.restudio.go.test.GoTestLocator
 import dev.restudio.go.test.GoTestRunConfigurationOptions
 import dev.restudio.go.test.GoTestRunConfiguration
 import dev.restudio.go.test.GoTestRunState
@@ -77,6 +80,17 @@ class GoTestRunConfigurationTest : BasePlatformTestCase() {
     val descriptor = factory.createDebugAdapterDescriptor(GoTestRunConfigurationOptions(), environment)
     assertTrue(descriptor.isDebuggableFile(goFile, project))
     assertFalse(descriptor.isDebuggableFile(textFile, project))
+  }
+
+  fun `test the locator opens the test function`() {
+    val directory = Path.of("../testdata/go/lib/greet").toAbsolutePath().normalize().toString()
+    // The sample project is not in the test project. Thus the scope lists its files.
+    val files = LocalFileSystem.getInstance().refreshAndFindFileByPath(directory)!!.children.toList()
+    val locations = GoTestLocator.getLocation("gotest", "$directory#TestHello", project, GlobalSearchScope.filesScope(project, files))
+    val descriptor = locations.single().openFileDescriptor!!
+    assertEquals("greet_test.go", descriptor.file.name)
+    val text = String(descriptor.file.contentsToByteArray())
+    assertEquals(text.indexOf("func TestHello"), descriptor.offset)
   }
 
   fun `test go test output on the sample project fills the tree`() {

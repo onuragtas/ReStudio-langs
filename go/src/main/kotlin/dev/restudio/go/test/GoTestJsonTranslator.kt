@@ -13,8 +13,11 @@ import com.intellij.execution.testframework.sm.ServiceMessageBuilder
  * Each package is a suite. Each test is a node under its package. A subtest such as `TestTable/one` is a node
  * under its parent test. A package that does not compile gets one failed node with the build output.
  * A package without tests does not get a suite.
+ *
+ * [packageDirectory] returns the directory of an import path. When it is known, each test gets a location hint
+ * for [GoTestLocator]. A subtest points to its top-level test function.
  */
-class GoTestJsonTranslator : TestEventTranslator {
+class GoTestJsonTranslator(private val packageDirectory: (String) -> String? = { null }) : TestEventTranslator {
   private val startedPackages = HashSet<String>()
   private val runningTests = HashMap<String, LinkedHashSet<String>>()
   private val failureLines = HashMap<String, StringBuilder>()
@@ -92,6 +95,7 @@ class GoTestJsonTranslator : TestEventTranslator {
       .firstOrNull { it.isNotEmpty() && it in tests }
     tests += test
     val builder = ServiceMessageBuilder.testStarted(test.substringAfterLast('/'))
+    packageDirectory(pkg)?.let { builder.addAttribute("locationHint", GoTestLocator.hint(it, test.substringBefore('/'))) }
     result += message(builder, testId(pkg, test), parent?.let { testId(pkg, it) } ?: packageId(pkg))
   }
 

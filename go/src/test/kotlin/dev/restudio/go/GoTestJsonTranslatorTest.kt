@@ -1,5 +1,6 @@
 package dev.restudio.go
 
+import dev.restudio.core.testing.TestOutput
 import dev.restudio.go.test.GoTestJsonTranslator
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -54,6 +55,29 @@ class GoTestJsonTranslatorTest {
     val text = tree("edge.jsonl").text.toString()
     assertTrue(text, text.contains("FAIL\texample.com/trace/ok\t0.450s"))
     assertTrue(text, text.contains("undefined: undefined"))
+  }
+
+  @Test
+  fun `tests get a location hint and subtests point to their parent function`() {
+    val hints = GoTestJsonTranslator { "/work/${it.substringAfterLast('/')}" }.let { translator ->
+      javaClass.getResource("/gotest/edge.jsonl")!!.readText().lineSequence()
+        .flatMap { translator.translate(it).orEmpty() }
+        .filterIsInstance<TestOutput.Message>()
+        .map { it.builder.toString() }
+        .filter { it.contains("testStarted") }
+        .map { Regex("name='([^']*)'.*locationHint='([^']*)'").find(it)?.destructured?.let { (n, h) -> "$n -> $h" } ?: it }
+        .toList()
+    }
+    assertEquals(
+      listOf(
+        "TestTable -> gotest:///work/ok#TestTable",
+        "one -> gotest:///work/ok#TestTable",
+        "two_words -> gotest:///work/ok#TestTable",
+        "TestSkip -> gotest:///work/ok#TestSkip",
+        "TestPanic -> gotest:///work/ok#TestPanic",
+      ),
+      hints.filter { it.contains("->") },
+    )
   }
 
   @Test

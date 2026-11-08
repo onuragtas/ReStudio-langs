@@ -38,7 +38,11 @@ class GoTestRunState(environment: ExecutionEnvironment, private val configuratio
 
   override fun execute(executor: Executor, runner: ProgramRunner<*>): ExecutionResult {
     val handler = startProcess()
-    val console = TestConsoles.attach(FRAMEWORK_NAME, configuration, executor, handler) { GoTestJsonTranslator() }
+    val console = TestConsoles.attach(FRAMEWORK_NAME, configuration, executor, handler, GoTestLocator) {
+      // The state runs "go test" on one package: the working directory.
+      val directory = configuration.workingDirectory
+      GoTestJsonTranslator { directory }
+    }
     return DefaultExecutionResult(console, handler, *createActions(console, handler, executor))
   }
 
