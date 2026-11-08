@@ -47,6 +47,7 @@
     <codeInsight.lineMarkerProvider language="textmate" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="TEXT" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.web.ide.WebAdvertiserSuppressor"/>
+    <textmate.bundleProvider implementation="dev.restudio.web.ide.VueBundleProvider"/>
     <configurationType implementation="dev.restudio.web.run.NpmScriptConfigurationType"/>
     <configurationType implementation="dev.restudio.web.test.VitestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.web.run.NpmScriptRunConfigurationProducer"/>

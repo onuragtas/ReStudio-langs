@@ -24,6 +24,7 @@ import dev.restudio.core.ide.FileExtensionAdvertiserSuppressor
 import dev.restudio.core.ide.FilteredLanguageServerSuggestionProvider
 import dev.restudio.core.ide.LanguageServerSuggestionFilterActivity
 import kotlinx.coroutines.runBlocking
+import org.jetbrains.plugins.textmate.TextMateService
 import dev.restudio.core.entrypoints.EntryPointLineMarkerInfo
 import dev.restudio.core.entrypoints.EntryPointLocation
 import dev.restudio.core.testing.FileLineLocator
@@ -107,6 +108,14 @@ class WebRunConfigurationTest : BasePlatformTestCase() {
     assertTrue(providers.any { it is FilteredLanguageServerSuggestionProvider })
     assertTrue(FileExtensionAdvertiserSuppressor.isReStudioFile(sampleFile("vue/src/lib/total.ts")))
     assertFalse(FileExtensionAdvertiserSuppressor.isReStudioFile(myFixture.addFileToProject("main.rs", "").virtualFile))
+  }
+
+  fun `test a Vue file gets the Vue grammar`() {
+    TextMateService.getInstance().reloadEnabledBundles()
+    val descriptor = TextMateService.getInstance().getLanguageDescriptorByExtension("vue")
+    assertEquals("text.html.vue", descriptor?.rootScopeName?.toString())
+    val file = PsiManager.getInstance(project).findFile(sampleFile("vue/src/App.vue"))!!
+    assertEquals("textmate", file.language.id)
   }
 
   fun `test Angular and Tailwind start only in their projects`() {
