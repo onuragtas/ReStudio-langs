@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SyntaxTraverser
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.ui.EditorNotificationProvider
 import com.redhat.devtools.lsp4ij.ui.LanguageServerSuggestionEditorNotificationProvider
@@ -112,7 +113,14 @@ class WebRunConfigurationTest : BasePlatformTestCase() {
 
   fun `test a Vue file gets the Vue grammar`() {
     TextMateService.getInstance().reloadEnabledBundles()
-    val descriptor = TextMateService.getInstance().getLanguageDescriptorByExtension("vue")
+    // The reload can finish on another thread. Wait up to ten seconds for the Vue language.
+    val deadline = System.currentTimeMillis() + 10_000
+    var descriptor = TextMateService.getInstance().getLanguageDescriptorByExtension("vue")
+    while (descriptor == null && System.currentTimeMillis() < deadline) {
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+      Thread.sleep(100)
+      descriptor = TextMateService.getInstance().getLanguageDescriptorByExtension("vue")
+    }
     assertEquals("text.html.vue", descriptor?.rootScopeName?.toString())
     val file = PsiManager.getInstance(project).findFile(sampleFile("vue/src/App.vue"))!!
     assertEquals("textmate", file.language.id)

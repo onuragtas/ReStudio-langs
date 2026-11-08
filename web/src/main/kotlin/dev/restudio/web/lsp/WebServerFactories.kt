@@ -6,6 +6,8 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.DocumentMatcher
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
+import dev.restudio.core.lsp.TracingClientFeatures
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import dev.restudio.core.sdk.ToolLocator
@@ -28,14 +30,20 @@ class VtslsServerFactory : LanguageServerFactory {
     connection(project, listOf(ToolLocator.find("vtsls")?.toString() ?: "vtsls", "--stdio"))
 
   override fun createLanguageClient(project: Project): LanguageClientImpl = VtslsLanguageClient(project)
+
+  override fun createClientFeatures(): LSPClientFeatures = TracingClientFeatures()
 }
 
 /** Starts the Vue language server. It sends its TypeScript work to vtsls through [VueLanguageClient]. */
 class VueServerFactory : LanguageServerFactory {
-  override fun createConnectionProvider(project: Project): StreamConnectionProvider =
-    connection(project, listOf(ToolLocator.find("vue-language-server")?.toString() ?: "vue-language-server", "--stdio"))
+  override fun createConnectionProvider(project: Project): StreamConnectionProvider {
+    val command = listOf(ToolLocator.find("vue-language-server")?.toString() ?: "vue-language-server", "--stdio")
+    return connection(project, StdioTee.wrap("restudio.vue", command))
+  }
 
   override fun createLanguageClient(project: Project): LanguageClientImpl = VueLanguageClient(project)
+
+  override fun createClientFeatures(): LSPClientFeatures = TracingClientFeatures()
 
   override fun getServerInterface(): Class<out LanguageServer> = VueLanguageServer::class.java
 }
@@ -79,3 +87,20 @@ class TailwindFileMatcher : ProjectMarkerMatcher(setOf("html", "css"), { directo
   directory.findChild("package.json")?.let { String(it.contentsToByteArray()).contains("\"tailwindcss\"") } == true
 })
 
+/**
+ * At the debug log level of `dev.restudio`, runs a server through `stdio-tee.mjs`. The script writes the raw bytes of
+ * both directions to `<log directory>/restudio-lsp/<server id>.raw`. Else it returns [command] as it is.
+ */
+object StdioTee {
+  private val LOG = com.intellij.openapi.diagnostic.logger<StdioTee>()
+
+  fun wrap(serverId: String, command: List<String>): List<String> {
+    if (!LOG.isDebugEnabled) return command
+    val node = NodeSdk.node() ?: return command
+    val directory = Path.of(com.intellij.openapi.application.PathManager.getLogPath(), "restudio-lsp")
+    java.nio.file.Files.createDirectories(directory)
+    val script = directory.resolve("stdio-tee.mjs")
+    java.nio.file.Files.write(script, StdioTee::class.java.getResourceAsStream("/lsp/stdio-tee.mjs")!!.use { it.readBytes() })
+    return listOf(node.toString(), script.toString(), directory.resolve("$serverId.raw").toString()) + command
+  }
+}

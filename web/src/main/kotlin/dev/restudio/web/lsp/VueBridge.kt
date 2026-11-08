@@ -4,6 +4,7 @@ import com.google.gson.Gson
 import com.google.gson.JsonArray
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServiceAccessor
@@ -52,8 +53,14 @@ object VueBridge {
     return Request(array[0], array[1].asString, array.get(2).takeIf { array.size() > 2 })
   }
 
-  /** The `tsserver/response` parameters: `[[id, body]]`. */
-  fun response(id: JsonElement, body: JsonElement?): List<Any?> = listOf(listOf(id, body))
+  /**
+   * The argument of [VueLanguageServer.tsserverResponse]: `[id, body]`.
+   *
+   * Vue LS reads the parameters `[[id, body]]`. lsp4j wraps the one argument of a notification in one more array,
+   * so the argument has one level less. The raw traffic showed it: with `[[id, body]]` as the argument, the wire had
+   * three levels, and Vue LS waited for ever.
+   */
+  fun response(id: JsonElement, body: JsonElement?): List<Any?> = listOf(id, body)
 
   /** The arguments of `typescript.tsserverRequest`, as the Vue extension of VS Code sends them. */
   fun executeCommand(request: Request): ExecuteCommandParams =
@@ -77,11 +84,26 @@ interface VueLanguageServer : LanguageServer {
 class VueLanguageClient(project: Project) : LanguageClientImpl(project) {
   @JsonNotification("tsserver/request")
   fun tsserverRequest(params: JsonElement) {
-    val request = VueBridge.parseRequest(params) ?: return
+    val request = VueBridge.parseRequest(params)
+    if (request == null) {
+      LOG.warn("Cannot read the Vue request $params")
+      return
+    }
+    val start = System.nanoTime()
+    LOG.debug { "Vue request ${request.id} ${request.command}" }
     vtsls()
-      .thenCompose { server -> server?.workspaceService?.executeCommand(VueBridge.executeCommand(request)) ?: CompletableFuture.completedFuture(null) }
+      .thenCompose { server ->
+        if (server == null) LOG.warn("No vtsls for the Vue request ${request.command}")
+        server?.workspaceService?.executeCommand(VueBridge.executeCommand(request)) ?: CompletableFuture.completedFuture(null)
+      }
       .exceptionally { error -> LOG.info("vtsls did not answer the Vue request ${request.command}", error); null }
-      .thenAccept { result -> (languageServer as? VueLanguageServer)?.tsserverResponse(VueBridge.response(request.id, VueBridge.body(result))) }
+      .thenAccept { result ->
+        val body = VueBridge.body(result)
+        LOG.debug { "Vue response ${request.id} ${request.command}: ${if (body == null) "no body" else "body"} after ${(System.nanoTime() - start) / 1_000_000} ms" }
+        val server = languageServer as? VueLanguageServer
+        if (server == null) LOG.warn("The Vue language server proxy is not a VueLanguageServer: $languageServer")
+        server?.tsserverResponse(VueBridge.response(request.id, body))
+      }
   }
 
   /** The started vtsls of the project. It starts with the first `.vue` or TypeScript file, so wait a short time for it. */
@@ -103,5 +125,13 @@ class VueLanguageClient(project: Project) : LanguageClientImpl(project) {
 
 /** Gives vtsls the settings of [VueBridge.vtslsSettings]. */
 class VtslsLanguageClient(project: Project) : LanguageClientImpl(project) {
-  override fun createSettings(): Any? = VueBridge.vtslsSettings() ?: super.createSettings()
+  override fun createSettings(): Any? {
+    val settings = VueBridge.vtslsSettings()
+    LOG.debug { "vtsls settings: $settings" }
+    return settings ?: super.createSettings()
+  }
+
+  private companion object {
+    val LOG = logger<VtslsLanguageClient>()
+  }
 }

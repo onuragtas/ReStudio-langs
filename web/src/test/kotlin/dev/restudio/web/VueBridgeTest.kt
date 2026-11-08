@@ -18,8 +18,8 @@ class VueBridgeTest {
     assertEquals("_vue:projectInfo", request.command)
     assertEquals("/work/web/vue/src/App.vue", request.arguments!!.asJsonObject["file"].asString)
     val body = JsonParser.parseString("""{"configFileName": "/work/web/vue/tsconfig.app.json"}""")
-    // Vue LS takes [[id, body]], the shape that worked in the probe.
-    assertEquals("""[[1,{"configFileName":"/work/web/vue/tsconfig.app.json"}]]""", Gson().toJson(VueBridge.response(request.id, body)))
+    // Vue LS takes [[id, body]] on the wire. lsp4j adds the outer array, so the argument is [id, body].
+    assertEquals("""[1,{"configFileName":"/work/web/vue/tsconfig.app.json"}]""", Gson().toJson(VueBridge.response(request.id, body)))
   }
 
   @Test

@@ -67,7 +67,9 @@ const out = {};
 out.tsInit = (await ts.request('initialize', init)).result ? 'ok' : 'failed';
 ts.notify('initialized', {});
 ts.notify('workspace/didChangeConfiguration', { settings });
-out.vueInit = (await vue.request('initialize', { ...init, initializationOptions: {} })).result ? 'ok' : 'failed';
+// VUE_INIT_FILE: the initialize parameters of another client, for example LSP4IJ (from its trace).
+const vueInit = process.env.VUE_INIT_FILE ? JSON.parse(readFileSync(process.env.VUE_INIT_FILE, 'utf8')) : { ...init, initializationOptions: {} };
+out.vueInit = (await vue.request('initialize', vueInit)).result ? 'ok' : 'failed';
 vue.notify('initialized', {});
 
 const app = resolve(root, 'src/App.vue');
@@ -77,6 +79,15 @@ ts.notify('textDocument/didOpen', { textDocument: doc });
 vue.notify('textDocument/didOpen', { textDocument: doc });
 const pos = (find, delta = 0) => { const i = text.indexOf(find) + delta; const before = text.slice(0, i); return { line: before.split('\n').length - 1, character: i - before.lastIndexOf('\n') - 1 }; };
 const td = { uri: doc.uri };
+// LSP4IJ order: many requests right after didOpen, and $/cancelRequest for the first ones (see the IDE trace).
+if (process.env.LSP4IJ_ORDER) {
+  const early = ['textDocument/documentLink', 'textDocument/inlayHint', 'textDocument/documentColor', 'textDocument/foldingRange', 'textDocument/documentSymbol', 'textDocument/semanticTokens/full'];
+  const range = { start: { line: 0, character: 0 }, end: { line: 7, character: 0 } };
+  const pendingEarly = early.map(m => vue.request(m, m.endsWith('inlayHint') ? { textDocument: td, range } : { textDocument: td }, 20000).then(r => `${m}: ${r.timeout ? 'TIMEOUT' : r.error ? 'error ' + r.error.message : 'ok'}`));
+  out.earlyCancelled = 'ids 1..5';
+  for (let id = 1; id <= 5; id++) vue.notify('$/cancelRequest', { id: id + 1 });
+  out.early = await Promise.all(pendingEarly);
+}
 await sleep(8000);
 
 const hoverText = r => { const c = r.result?.contents; return typeof c === 'string' ? c : c?.value ?? (Array.isArray(c) ? c.map(x => x.value ?? x).join(' ') : null); };
