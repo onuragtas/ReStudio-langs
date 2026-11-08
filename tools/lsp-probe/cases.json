@@ -1,0 +1,109 @@
+{
+  "gopls": {
+    "root": "go", "file": "api/cmd/server/main.go", "languageId": "go",
+    "command": ["gopls", "serve"],
+    "symbol": { "find": "greet.Hello", "offset": 6 },
+    "completion": { "find": "greet.Hello", "offset": 6 },
+    "renameTo": "Greet", "settleMs": 15000
+  },
+  "roslyn": {
+    "root": "dotnet", "file": "src/Shop.Application/ProductService.cs", "languageId": "csharp",
+    "command": ["roslyn-language-server", "--stdio", "--logLevel", "Information", "--extensionLogDirectory", "${home}/.restudio-dev/logs/roslyn"],
+    "symbol": { "find": "List<Product>", "offset": 5 },
+    "completion": { "find": "p.PriceWithTax", "offset": 2 },
+    "renameTo": "Item", "settleMs": 60000, "warmupMs": 90000, "initTimeoutMs": 90000
+  },
+  "roslyn-solution-open": {
+    "root": "dotnet", "file": "src/Shop.Application/ProductService.cs", "languageId": "csharp",
+    "command": ["roslyn-language-server", "--stdio", "--logLevel", "Information", "--extensionLogDirectory", "${home}/.restudio-dev/logs/roslyn"],
+    "afterInit": [{ "method": "solution/open", "params": { "solution": "${rootUri}/Shop.sln" } }],
+    "symbol": { "find": "List<Product>", "offset": 5 },
+    "completion": { "find": "p.PriceWithTax", "offset": 2 },
+    "renameTo": "Item", "settleMs": 60000, "warmupMs": 90000, "initTimeoutMs": 90000
+  },
+  "csharp-ls": {
+    "root": "dotnet", "file": "src/Shop.Application/ProductService.cs", "languageId": "csharp",
+    "command": ["csharp-ls", "--solution", "Shop.sln"],
+    "symbol": { "find": "List<Product>", "offset": 5 },
+    "completion": { "find": "p.PriceWithTax", "offset": 2 },
+    "renameTo": "Item", "settleMs": 60000, "warmupMs": 90000, "initTimeoutMs": 90000
+  },
+  "vtsls-react": {
+    "root": "web/react", "file": "src/App.tsx", "languageId": "typescriptreact",
+    "command": ["vtsls", "--stdio"],
+    "symbol": { "find": "useState", "occurrence": 2 },
+    "completion": { "find": "useState", "occurrence": 2, "offset": 3 },
+    "renameTo": "useStateRenamed", "settleMs": 10000
+  },
+  "tsls-react": {
+    "root": "web/react", "file": "src/App.tsx", "languageId": "typescriptreact",
+    "command": ["typescript-language-server", "--stdio"],
+    "symbol": { "find": "useState", "occurrence": 2 },
+    "completion": { "find": "useState", "occurrence": 2, "offset": 3 },
+    "renameTo": "useStateRenamed", "settleMs": 10000
+  },
+  "tsgo-react": {
+    "root": "web/react", "file": "src/App.tsx", "languageId": "typescriptreact",
+    "command": ["${root}/node_modules/.bin/tsc", "--lsp", "--stdio"],
+    "symbol": { "find": "useState", "occurrence": 2 },
+    "completion": { "find": "useState", "occurrence": 2, "offset": 3 },
+    "renameTo": "useStateRenamed", "settleMs": 10000
+  },
+  "vtsls-vue-ts": {
+    "root": "web/vue", "file": "src/main.ts", "languageId": "typescript",
+    "command": ["vtsls", "--stdio"],
+    "symbol": { "find": "createApp", "occurrence": 2 },
+    "completion": { "find": "createApp", "occurrence": 2, "offset": 3 },
+    "renameTo": "makeApp", "settleMs": 10000
+  },
+  "vue-ls": {
+    "root": "web/vue", "file": "src/App.vue", "languageId": "vue",
+    "command": ["vue-language-server", "--stdio"],
+    "initializationOptions": { "typescript": { "tsdk": "${root}/node_modules/typescript/lib" } },
+    "symbol": { "find": "HelloWorld", "occurrence": 3 },
+    "completion": { "find": "<HelloWorld", "offset": 1 },
+    "renameTo": "HelloThere", "settleMs": 10000
+  },
+  "css": {
+    "root": "web/react", "file": "src/App.css", "languageId": "css",
+    "command": ["vscode-css-language-server", "--stdio"],
+    "symbol": { "find": "font-size" },
+    "completion": { "find": "font-size", "offset": 4 },
+    "settleMs": 3000, "warmupMs": 3000
+  },
+  "html": {
+    "root": "web/vue", "file": "index.html", "languageId": "html",
+    "command": ["vscode-html-language-server", "--stdio"],
+    "symbol": { "find": "<div", "offset": 1 },
+    "completion": { "find": "<div", "offset": 2 },
+    "settleMs": 3000, "warmupMs": 3000
+  },
+  "eslint-vue-ts": {
+    "root": "web/vue", "file": "src/main.ts", "languageId": "typescript",
+    "command": ["vscode-eslint-language-server", "--stdio"],
+    "settings": {
+      "": {
+        "validate": "on", "run": "onType", "useFlatConfig": true, "experimental": {}, "problems": {},
+        "rulesCustomizations": [], "codeAction": { "disableRuleComment": { "enable": true, "location": "separateLine" }, "showDocumentation": { "enable": true } },
+        "codeActionOnSave": { "enable": false, "mode": "all" }, "format": false, "quiet": false,
+        "onIgnoredFiles": "off", "options": {}, "nodePath": null, "workingDirectory": { "mode": "auto" }
+      }
+    },
+    "symbol": { "find": "unusedProbe" },
+    "settleMs": 8000, "warmupMs": 1000
+  },
+  "phpactor": {
+    "root": "php", "file": "routes/web.php", "languageId": "php",
+    "command": ["php", "${home}/.restudio-dev/tools/phpactor/2026.10.07.0/phpactor.phar", "language-server"],
+    "symbol": { "find": "Route::get" },
+    "completion": { "find": "Route::get", "offset": 7 },
+    "renameTo": "Router", "settleMs": 60000, "warmupMs": 60000
+  },
+  "dart": {
+    "root": "flutter", "file": "lib/main.dart", "languageId": "dart",
+    "command": ["${home}/flutter/bin/dart", "language-server", "--protocol=lsp"],
+    "symbol": { "find": "runApp" },
+    "completion": { "find": "runApp", "offset": 3 },
+    "renameTo": "startApp", "settleMs": 20000
+  }
+}
