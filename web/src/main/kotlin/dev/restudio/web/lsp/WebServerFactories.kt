@@ -5,10 +5,12 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.redhat.devtools.lsp4ij.DocumentMatcher
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
+import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.web.sdk.NodeSdk
+import org.eclipse.lsp4j.services.LanguageServer
 import java.nio.file.Path
 
 private fun connection(project: Project, command: List<String>): StreamConnectionProvider {
@@ -17,10 +19,25 @@ private fun connection(project: Project, command: List<String>): StreamConnectio
   return OSProcessStreamConnectionProvider(commandLine)
 }
 
-/** Starts vtsls for TypeScript and JavaScript. vtsls brings its own TypeScript when the project has TypeScript 7. */
+/**
+ * Starts vtsls for TypeScript, JavaScript and the script part of Vue files. vtsls brings its own TypeScript when the
+ * project has TypeScript 7. Its client loads `@vue/typescript-plugin` (see [VueBridge]).
+ */
 class VtslsServerFactory : LanguageServerFactory {
   override fun createConnectionProvider(project: Project): StreamConnectionProvider =
     connection(project, listOf(ToolLocator.find("vtsls")?.toString() ?: "vtsls", "--stdio"))
+
+  override fun createLanguageClient(project: Project): LanguageClientImpl = VtslsLanguageClient(project)
+}
+
+/** Starts the Vue language server. It sends its TypeScript work to vtsls through [VueLanguageClient]. */
+class VueServerFactory : LanguageServerFactory {
+  override fun createConnectionProvider(project: Project): StreamConnectionProvider =
+    connection(project, listOf(ToolLocator.find("vue-language-server")?.toString() ?: "vue-language-server", "--stdio"))
+
+  override fun createLanguageClient(project: Project): LanguageClientImpl = VueLanguageClient(project)
+
+  override fun getServerInterface(): Class<out LanguageServer> = VueLanguageServer::class.java
 }
 
 /**

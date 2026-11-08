@@ -21,6 +21,11 @@
     <fileNamePatternMapping patterns="*.js;*.mjs;*.cjs" serverId="restudio.vtsls" languageId="javascript"/>
     <fileNamePatternMapping patterns="*.jsx" serverId="restudio.vtsls" languageId="javascriptreact"/>
 
+    <!-- A Vue file goes to vtsls (script, with @vue/typescript-plugin) and to Vue LS (template and style). -->
+    <fileNamePatternMapping patterns="*.vue" serverId="restudio.vtsls" languageId="vue"/>
+    <server id="restudio.vue" name="Vue LS (ReStudio)" factoryClass="dev.restudio.web.lsp.VueServerFactory"/>
+    <fileNamePatternMapping patterns="*.vue" serverId="restudio.vue" languageId="vue"/>
+
     <!-- Angular and Tailwind start only in a project that uses them: a document matcher checks the project. -->
     <server id="restudio.angular" name="Angular LS (ReStudio)" factoryClass="dev.restudio.web.lsp.AngularServerFactory"/>
     <languageMapping language="HTML" serverId="restudio.angular" languageId="html"
