@@ -5,8 +5,9 @@ import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
+import dev.restudio.core.entrypoints.ContextEntryPoints
 import dev.restudio.core.entrypoints.EntryPoint
-import dev.restudio.go.run.GoContextEntryPoint
+import dev.restudio.go.run.GoEntryPointDetector
 import dev.restudio.go.run.GoLaunches
 
 /** Creates a [GoTestRunConfiguration] for one Go test function. */
@@ -32,7 +33,7 @@ class GoTestRunConfigurationProducer : LazyRunConfigurationProducer<GoTestRunCon
   }
 
   private fun testFor(context: ConfigurationContext): GoTest? {
-    val (file, entryPoint) = GoContextEntryPoint.find(context) ?: return null
+    val (file, entryPoint) = ContextEntryPoints.find(context, GoEntryPointDetector) { it.extension == "go" } ?: return null
     if (entryPoint.kind != EntryPoint.Kind.TEST) return null
     return GoTest(GoLaunches.testPattern(entryPoint), GoLaunches.create(file, entryPoint))
   }

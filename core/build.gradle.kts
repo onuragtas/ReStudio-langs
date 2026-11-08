@@ -2,8 +2,10 @@ import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
 plugins {
   id("org.jetbrains.kotlin.jvm")
-  id("org.jetbrains.intellij.platform.module")
+  id("org.jetbrains.intellij.platform")
 }
+
+version = providers.gradleProperty("restudio.version").get()
 
 repositories {
   mavenCentral()
@@ -28,5 +30,18 @@ kotlin {
   jvmToolchain(25)
   compilerOptions {
     allWarningsAsErrors = true
+  }
+}
+
+intellijPlatform {
+  buildSearchableOptions = false
+  pluginConfiguration {
+    id = "dev.restudio.core"
+    name = "ReStudio Core"
+    version = project.version.toString()
+    ideaVersion {
+      sinceBuild = "263"
+      untilBuild = provider { null }
+    }
   }
 }

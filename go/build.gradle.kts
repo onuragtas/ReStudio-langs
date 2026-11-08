@@ -23,7 +23,7 @@ dependencies {
     bundledModule("intellij.platform.testRunner")
     bundledModule("intellij.libraries.teamcity.service.messages")
     bundledPlugin("org.jetbrains.plugins.textmate")
-    pluginModule(implementation(project(":core")))
+    localPlugin(project(":core"))
     testFramework(TestFrameworkType.Platform)
   }
   testImplementation("junit:junit:4.13.2")

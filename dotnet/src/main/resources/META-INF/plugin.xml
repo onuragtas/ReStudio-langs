@@ -1,0 +1,37 @@
+<idea-plugin>
+  <id>dev.restudio.dotnet</id>
+  <name>ReStudio .NET</name>
+  <vendor>ReStudio</vendor>
+  <description><![CDATA[
+    C# and .NET support through Roslyn LS and netcoredbg: code insight, run and debug gutter icons for
+    the program entry point and the tests, and a test tree for <code>dotnet test</code>.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+  <depends>dev.restudio.core</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server id="restudio.roslyn"
+            name="Roslyn LS (ReStudio)"
+            factoryClass="dev.restudio.dotnet.lsp.RoslynServerFactory"/>
+    <fileNamePatternMapping patterns="*.cs"
+                            serverId="restudio.roslyn"
+                            languageId="csharp"/>
+    <debugAdapterServer id="restudio.netcoredbg"
+                        name="netcoredbg (ReStudio)"
+                        factoryClass="dev.restudio.dotnet.debug.NetcoredbgDescriptorFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="textmate"
+                                    implementationClass="dev.restudio.dotnet.run.CSharpLineMarkerProvider"/>
+    <configurationType implementation="dev.restudio.dotnet.run.DotnetRunConfigurationType"/>
+    <configurationType implementation="dev.restudio.dotnet.test.DotnetTestConfigurationType"/>
+    <runConfigurationProducer implementation="dev.restudio.dotnet.run.DotnetRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.dotnet.test.DotnetTestRunConfigurationProducer"/>
+    <stepsBeforeRunProvider implementation="dev.restudio.dotnet.run.DotnetBuildBeforeRunTaskProvider"/>
+    <notificationGroup id="ReStudio .NET" displayType="BALLOON"/>
+  </extensions>
+</idea-plugin>

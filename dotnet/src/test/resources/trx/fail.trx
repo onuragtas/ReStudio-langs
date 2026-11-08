@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="9f5325d5-d54b-4056-9d21-0ea8681af7ab" name="@build-host 2026-11-08 11:12:20" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-11-08T11:12:20.3195670+03:00" queuing="2026-11-08T11:12:20.3195670+03:00" start="2026-11-08T11:12:19.8797740+03:00" finish="2026-11-08T11:12:20.3225830+03:00" />
+  <TestSettings name="default" id="9aa55366-9b42-4381-a658-2fe3fafd8f99">
+    <Deployment runDeploymentRoot="_build-host_2026-11-08_11_12_20" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="9dba246e-718c-4d52-9071-25af9499f3bf" testId="49541640-2a60-8e5a-c2f8-18114a06ac0e" testName="Shop.Domain.Tests.FailProbeTests.ProbeFails" computerName="build-host" duration="00:00:00.0039030" startTime="2026-11-08T11:12:20.2389100+03:00" endTime="2026-11-08T11:12:20.2512450+03:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9dba246e-718c-4d52-9071-25af9499f3bf">
+      <Output>
+        <ErrorInfo>
+          <Message>Assert.Equal() Failure: Values differ
+Expected: 1
+Actual:   2</Message>
+          <StackTrace>   at Shop.Domain.Tests.FailProbeTests.ProbeFails() in /work/ReStudio-langs/testdata/dotnet/tests/Shop.Domain.Tests/FailProbeTests.cs:line 8
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Shop.Domain.Tests.FailProbeTests.ProbeFails" storage="/work/restudio-langs/testdata/dotnet/tests/shop.domain.tests/bin/debug/net10.0/shop.domain.tests.dll" id="49541640-2a60-8e5a-c2f8-18114a06ac0e">
+      <Execution id="9dba246e-718c-4d52-9071-25af9499f3bf" />
+      <TestMethod codeBase="/work/ReStudio-langs/testdata/dotnet/tests/Shop.Domain.Tests/bin/Debug/net10.0/Shop.Domain.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Shop.Domain.Tests.FailProbeTests" name="ProbeFails" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="49541640-2a60-8e5a-c2f8-18114a06ac0e" executionId="9dba246e-718c-4d52-9071-25af9499f3bf" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Bir Listede Olmayan Sonuçlar" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="Yüklenen Tüm Sonuçlar" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="1" executed="1" passed="0" failed="1" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.1.4+50e68bbb8b (64-bit .NET 10.0.14)
+[xUnit.net 00:00:00.04]   Discovering: Shop.Domain.Tests
+[xUnit.net 00:00:00.06]   Discovered:  Shop.Domain.Tests
+[xUnit.net 00:00:00.07]   Starting:    Shop.Domain.Tests
+[xUnit.net 00:00:00.09]       Assert.Equal() Failure: Values differ
+[xUnit.net 00:00:00.09]       Expected: 1
+[xUnit.net 00:00:00.09]       Actual:   2
+[xUnit.net 00:00:00.09]       Stack Trace:
+[xUnit.net 00:00:00.09]         /work/ReStudio-langs/testdata/dotnet/tests/Shop.Domain.Tests/FailProbeTests.cs(8,0): at Shop.Domain.Tests.FailProbeTests.ProbeFails()
+[xUnit.net 00:00:00.09]            at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+[xUnit.net 00:00:00.09]            at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+[xUnit.net 00:00:00.10]   Finished:    Shop.Domain.Tests
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="build-host" outcome="Error" timestamp="2026-11-08T11:12:20.2528220+03:00">
+        <Text>[xUnit.net 00:00:00.09]     Shop.Domain.Tests.FailProbeTests.ProbeFails [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

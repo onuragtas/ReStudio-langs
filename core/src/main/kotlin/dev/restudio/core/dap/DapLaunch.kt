@@ -11,6 +11,7 @@ import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
  * The parts of an LSP4IJ debug adapter run configuration that a language plugin fills in.
  *
  * [readyPattern] is the adapter output that tells LSP4IJ the address and the port.
+ * When it is `null`, the adapter speaks DAP on its standard input and output.
  * [launch] is the JSON of the DAP `launch` request.
  * [serverId] is the ID of a registered LSP4IJ debug adapter. LSP4IJ asks it which files take breakpoints.
  * When it is `null`, LSP4IJ sends no breakpoint to the adapter.
@@ -18,7 +19,7 @@ import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
 data class DapLaunch(
   val adapterName: String,
   val command: String,
-  val readyPattern: String,
+  val readyPattern: String?,
   val workingDirectory: String,
   val file: String,
   val launch: String,
@@ -29,8 +30,16 @@ data class DapLaunch(
     configuration.serverId = serverId
     configuration.serverName = adapterName
     configuration.command = command
-    configuration.debugServerWaitStrategy = DebugServerWaitStrategy.TRACE
-    configuration.debugServerReadyPattern = readyPattern
+    if (readyPattern != null) {
+      configuration.debugServerWaitStrategy = DebugServerWaitStrategy.TRACE
+      configuration.debugServerReadyPattern = readyPattern
+    }
+    else {
+      // With TIMEOUT and no address, LSP4IJ uses the standard streams of the adapter process.
+      configuration.debugServerWaitStrategy = DebugServerWaitStrategy.TIMEOUT
+      configuration.connectTimeout = 0
+      configuration.debugServerReadyPattern = ""
+    }
     configuration.debugMode = DebugMode.LAUNCH
     configuration.workingDirectory = workingDirectory
     configuration.file = file

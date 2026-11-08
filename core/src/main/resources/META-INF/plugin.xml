@@ -1,0 +1,12 @@
+<idea-plugin>
+  <id>dev.restudio.core</id>
+  <name>ReStudio Core</name>
+  <vendor>ReStudio</vendor>
+  <description><![CDATA[
+    Shared code of the ReStudio language plugins: run and debug gutter icons, debug adapter launches through LSP4IJ,
+    and the test tree for external test runners.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+</idea-plugin>

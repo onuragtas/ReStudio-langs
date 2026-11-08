@@ -1,12 +1,18 @@
 package dev.restudio.core.dap
 
-/** Writes a small JSON object for a DAP `launch` request. Values are strings or string lists. */
+/**
+ * Writes a small JSON object for a DAP `launch` request.
+ *
+ * A value is a string, a boolean, a number, a list of these, or a map with string keys.
+ */
 fun jsonObject(vararg entries: Pair<String, Any>): String =
   entries.joinToString(",\n", "{\n", "\n}") { (key, value) -> "  ${quote(key)}: ${jsonValue(value)}" }
 
-private fun jsonValue(value: Any): String = when (value) {
+private fun jsonValue(value: Any?): String = when (value) {
   is String -> quote(value)
-  is List<*> -> value.joinToString(", ", "[", "]") { quote(it.toString()) }
+  is Boolean, is Int, is Long -> value.toString()
+  is List<*> -> value.joinToString(", ", "[", "]") { jsonValue(it) }
+  is Map<*, *> -> value.entries.joinToString(", ", "{", "}") { (key, item) -> "${quote(key.toString())}: ${jsonValue(item)}" }
   else -> error("Unsupported JSON value: $value")
 }
 

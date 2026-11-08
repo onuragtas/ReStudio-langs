@@ -4,8 +4,9 @@ This repo holds the language plugins of ReStudio. The plan is in the fork repo: 
 
 ## Layout
 
-- `core/`: shared code. It has no `plugin.xml`. Each language plugin merges it in with `pluginModule`.
-- `go/`: gopls, Delve and the Go run gutter icons. It produces one plugin `.zip`.
+- `core/`: shared code, as its own plugin `dev.restudio.core`. Each language plugin depends on it. Two plugins cannot embed the same content module: the IDE disables one of them.
+- `go/`: gopls, Delve, the Go gutter icons and the `go test -json` test tree.
+- `dotnet/`: Roslyn LS, netcoredbg, the C# gutter icons and the `dotnet test` (TRX) test tree.
 - `testdata/`: one sample project for each language.
 - `tools/lsp-probe/`, `tools/dap-probe/`, `tools/test-probe/`: headless clients that record the real LSP, DAP and test runner traffic.
 
@@ -16,7 +17,7 @@ Use JDK 25. Platform 263 needs Java 25.
 ```
 export JAVA_HOME=/opt/homebrew/opt/openjdk@25
 ./gradlew :go:test          # unit and platform tests
-./gradlew :go:buildPlugin   # go/build/distributions/*.zip
+./gradlew buildPlugin       # core, go and dotnet zips in */build/distributions
 ./gradlew :go:runFork       # starts the local fork build with the plugin
 tools/open-ide.sh go         # opens testdata/go in the fork build (data: ~/.restudio-dev/ide-data)
 ```

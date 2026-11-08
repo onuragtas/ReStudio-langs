@@ -7,6 +7,7 @@ import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
 import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
 import dev.restudio.core.dap.DapLaunch
+import dev.restudio.core.entrypoints.ContextEntryPoints
 import dev.restudio.core.entrypoints.EntryPoint
 
 /** Creates a Delve run configuration for `func main()`. [dev.restudio.go.test.GoTestRunConfigurationProducer] does the tests. */
@@ -28,7 +29,7 @@ class GoRunConfigurationProducer : LazyRunConfigurationProducer<DAPRunConfigurat
     launchFor(context)?.second?.matches(configuration) == true
 
   private fun launchFor(context: ConfigurationContext): Pair<String, DapLaunch>? {
-    val (file, entryPoint) = GoContextEntryPoint.find(context) ?: return null
+    val (file, entryPoint) = ContextEntryPoints.find(context, GoEntryPointDetector) { it.extension == "go" } ?: return null
     if (entryPoint.kind != EntryPoint.Kind.MAIN) return null
     return GoLaunches.create(file, entryPoint)
   }
