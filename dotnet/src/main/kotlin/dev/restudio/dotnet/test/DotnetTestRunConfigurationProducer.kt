@@ -10,7 +10,6 @@ import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.dotnet.DotnetBundle
 import dev.restudio.dotnet.project.DotnetProject
 import dev.restudio.dotnet.run.CSharpEntryPointDetector
-import dev.restudio.dotnet.run.DotnetLaunches
 
 /** Creates a [DotnetTestRunConfiguration] for one C# test method. */
 class DotnetTestRunConfigurationProducer : LazyRunConfigurationProducer<DotnetTestRunConfiguration>() {
@@ -18,12 +17,7 @@ class DotnetTestRunConfigurationProducer : LazyRunConfigurationProducer<DotnetTe
 
   override fun setupConfigurationFromContext(configuration: DotnetTestRunConfiguration, context: ConfigurationContext, sourceElement: Ref<PsiElement>): Boolean {
     val (project, test, file) = testFor(context) ?: return false
-    DotnetLaunches.testAttach(project, file)?.applyTo(configuration)
-    configuration.projectFile = project.file.toString()
-    configuration.workingDirectory = project.directory.toString()
-    configuration.testFilter = filter(test)
-    configuration.name = DotnetBundle.message("test.configuration.name", test.substringAfterLast('.'))
-    configuration.beforeRunTasks = listOf(DotnetTestHostBeforeRunTask())
+    configuration.setUp(project, file, filter(test), DotnetBundle.message("test.configuration.name", test.substringAfterLast('.')))
     return true
   }
 

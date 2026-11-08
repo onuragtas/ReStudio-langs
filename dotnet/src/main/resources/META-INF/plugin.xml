@@ -7,6 +7,8 @@
     the program entry point and the tests, and a test tree for <code>dotnet test</code>.
   ]]></description>
 
+  <resource-bundle>messages.DotnetBundle</resource-bundle>
+
   <depends>com.intellij.modules.platform</depends>
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>dev.restudio.core</depends>
@@ -38,4 +40,10 @@
     <notificationGroup id="ReStudio .NET" displayType="BALLOON"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.dotnet.ide.DotnetAdvertiserSuppressor"/>
   </extensions>
+
+  <actions>
+    <!-- The IDs are the Roslyn LS code lens commands. LSP4IJ runs the action with the same ID. -->
+    <action id="dotnet.test.run" class="dev.restudio.dotnet.lsp.DotnetTestRunCommandAction"/>
+    <action id="roslyn.client.peekReferences" class="dev.restudio.dotnet.lsp.RoslynPeekReferencesCommandAction"/>
+  </actions>
 </idea-plugin>

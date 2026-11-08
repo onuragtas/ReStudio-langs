@@ -14,13 +14,19 @@ data class DotnetProject(val file: Path, val assemblyName: String, val targetFra
 
   val name: String get() = file.fileName.toString().removeSuffix(".csproj")
 
-  /** `true` for a console app, a worker or a web app. */
-  val isExecutable: Boolean get() = outputType.equals("Exe", ignoreCase = true) || outputType.equals("WinExe", ignoreCase = true) || sdk == "Microsoft.NET.Sdk.Web"
+  /**
+   * `true` for a console app, a worker or a web app.
+   *
+   * An explicit `OutputType` decides. Else the Web and Worker SDKs make an executable: they set `OutputType` to `Exe`.
+   */
+  val isExecutable: Boolean get() = outputType?.let { it.equals("Exe", ignoreCase = true) || it.equals("WinExe", ignoreCase = true) } ?: (sdk in EXECUTABLE_SDKS)
 
   /** The Debug build output: `bin/Debug/<framework>/<assembly>.dll`. */
   val targetPath: Path? get() = targetFramework?.let { directory.resolve("bin/Debug/$it/$assemblyName.dll") }
 
   companion object {
+    private val EXECUTABLE_SDKS = setOf("Microsoft.NET.Sdk.Web", "Microsoft.NET.Sdk.Worker")
+
     /** Returns the nearest `.csproj` file in the directory of [file] or above it. */
     fun find(file: VirtualFile): DotnetProject? =
       generateSequence(file.parent) { it.parent }

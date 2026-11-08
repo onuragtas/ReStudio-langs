@@ -26,6 +26,8 @@ import dev.restudio.core.testing.DirectoryTestLocator
 import dev.restudio.core.testing.TestConsoles
 import dev.restudio.dotnet.DotnetBundle
 import dev.restudio.dotnet.debug.NetcoredbgAttachState
+import dev.restudio.dotnet.project.DotnetProject
+import dev.restudio.dotnet.run.DotnetLaunches
 import dev.restudio.dotnet.run.CSharpEntryPointDetector
 import dev.restudio.dotnet.sdk.DotnetSdk
 import java.nio.charset.StandardCharsets
@@ -62,6 +64,19 @@ class DotnetTestRunConfiguration(project: Project, factory: ConfigurationFactory
     if (executor.id == DefaultRunExecutor.EXECUTOR_ID) return DotnetTestRunState(environment, this)
     val testHost = environment.getUserData(DotnetTestHost.KEY) ?: throw ExecutionException(DotnetBundle.message("test.host.not.started"))
     return NetcoredbgAttachState.create(this, options, environment, testHost.processId, testHost.handler, testHost.output)
+  }
+
+  /**
+   * Fills in the configuration for the tests that [filter] selects in [project]. [file] is the source of the tests.
+   * The Debug executor needs the netcoredbg settings and the test host step; both are set here.
+   */
+  fun setUp(project: DotnetProject, file: String, filter: String, name: String) {
+    DotnetLaunches.testAttach(project, file)?.applyTo(this)
+    projectFile = project.file.toString()
+    workingDirectory = project.directory.toString()
+    testFilter = filter
+    this.name = name
+    beforeRunTasks = listOf(DotnetTestHostBeforeRunTask())
   }
 
   /**

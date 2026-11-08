@@ -11,6 +11,8 @@ import com.intellij.psi.PsiFile
  * The gutter icon passes an [EntryPointLocation] with the exact entry point.
  * The editor context menu passes the whole file, because a TextMate file is one PSI leaf.
  * Then the caret decides: the entry point on the caret line, or else the nearest one above it.
+ * The project view has no caret. When the caret gives nothing and the file has one main entry point, that one wins:
+ * a program file runs from any line.
  */
 object ContextEntryPoints {
   fun find(context: ConfigurationContext, detector: EntryPointDetector, accepts: (VirtualFile) -> Boolean): Pair<VirtualFile, EntryPoint>? {
@@ -26,10 +28,11 @@ object ContextEntryPoints {
     val document = file.viewProvider.document ?: return null
     val offset = CommonDataKeys.EDITOR.getData(context.dataContext)?.caretModel?.offset
                  ?: context.psiLocation?.textRange?.startOffset
-                 ?: return null
+                 ?: 0
     val line = document.getLineNumber(offset)
     val entryPoints = detector.detect(file.name, document.charsSequence)
     return entryPoints.firstOrNull { document.getLineNumber(it.offset) == line }
            ?: entryPoints.lastOrNull { document.getLineNumber(it.offset) < line }
+           ?: entryPoints.singleOrNull { it.kind == EntryPoint.Kind.MAIN }
   }
 }

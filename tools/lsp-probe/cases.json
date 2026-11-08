@@ -365,5 +365,35 @@
     },
     "settleMs": 8000,
     "warmupMs": 3000
+  },
+  "roslyn-codelens": {
+    "root": "dotnet",
+    "file": "tests/Shop.Domain.Tests/ProductTests.cs",
+    "languageId": "csharp",
+    "command": [
+      "roslyn-language-server",
+      "--stdio",
+      "--logLevel",
+      "Information",
+      "--extensionLogDirectory",
+      "${home}/.restudio-dev/logs/roslyn"
+    ],
+    "afterInit": [
+      {
+        "method": "solution/open",
+        "params": {
+          "solution": "${rootUri}/Shop.sln"
+        }
+      }
+    ],
+    "symbol": {
+      "find": "PriceWithTaxAddsTheRate",
+      "offset": 2
+    },
+    "renameTo": "Item",
+    "settleMs": 60000,
+    "warmupMs": 90000,
+    "initTimeoutMs": 90000,
+    "codeLens": true
   }
 }

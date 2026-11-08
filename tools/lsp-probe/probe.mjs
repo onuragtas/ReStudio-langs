@@ -220,6 +220,16 @@ try {
     const r = ok(await request('textDocument/formatting', { textDocument: td, options: { tabSize: 4, insertSpaces: true } }));
     return { edits: Array.isArray(r) ? r.length : 0 };
   });
+  // codeLens: list the code lens commands of the file with their arguments. Resolve a lens without a command.
+  if (c.codeLens) await run('codeLens', async () => {
+    const lenses = ok(await request('textDocument/codeLens', { textDocument: td })) ?? [];
+    const commands = [];
+    for (const lens of lenses.slice(0, 6)) {
+      const full = lens.command ? lens : ok(await request('codeLens/resolve', lens));
+      commands.push({ line: lens.range?.start?.line, title: full?.command?.title, command: full?.command?.command, arguments: full?.command?.arguments });
+    }
+    return { count: lenses.length, commands };
+  });
   await run('diagnostics', async () => {
     let pull = null;
     if (out.initialize.capabilities.includes('diagnosticProvider')) {
