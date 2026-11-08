@@ -1,0 +1,50 @@
+<idea-plugin>
+  <id>dev.restudio.web</id>
+  <name>ReStudio Web</name>
+  <vendor>ReStudio</vendor>
+  <description><![CDATA[
+    TypeScript, JavaScript, Angular and Tailwind support through vtsls and the framework language servers,
+    npm script runs, js-debug, and the Vitest test tree.
+  ]]></description>
+
+  <resource-bundle>messages.WebBundle</resource-bundle>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+  <depends>dev.restudio.core</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server id="restudio.vtsls" name="vtsls (ReStudio)" factoryClass="dev.restudio.web.lsp.VtslsServerFactory"/>
+    <fileNamePatternMapping patterns="*.ts;*.mts;*.cts" serverId="restudio.vtsls" languageId="typescript"/>
+    <fileNamePatternMapping patterns="*.tsx" serverId="restudio.vtsls" languageId="typescriptreact"/>
+    <fileNamePatternMapping patterns="*.js;*.mjs;*.cjs" serverId="restudio.vtsls" languageId="javascript"/>
+    <fileNamePatternMapping patterns="*.jsx" serverId="restudio.vtsls" languageId="javascriptreact"/>
+
+    <!-- Angular and Tailwind start only in a project that uses them: a document matcher checks the project. -->
+    <server id="restudio.angular" name="Angular LS (ReStudio)" factoryClass="dev.restudio.web.lsp.AngularServerFactory"/>
+    <languageMapping language="HTML" serverId="restudio.angular" languageId="html"
+                     documentMatcher="dev.restudio.web.lsp.AngularTemplateMatcher"/>
+    <server id="restudio.tailwind" name="Tailwind CSS LS (ReStudio)" factoryClass="dev.restudio.web.lsp.TailwindServerFactory"/>
+    <languageMapping language="HTML" serverId="restudio.tailwind" languageId="html"
+                     documentMatcher="dev.restudio.web.lsp.TailwindFileMatcher"/>
+    <!-- The platform maps *.css to its built-in "CSS" custom file type, whose language is TEXT. -->
+    <languageMapping language="TEXT" serverId="restudio.tailwind" languageId="css"
+                     documentMatcher="dev.restudio.web.lsp.TailwindFileMatcher"/>
+
+    <debugAdapterServer id="restudio.js-debug" name="js-debug (ReStudio)"
+                        factoryClass="dev.restudio.web.debug.JsDebugDescriptorFactory"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- package.json is JSON. *.ts and *.tsx go to TextMate. The platform maps *.js to a custom file type (TEXT). -->
+    <codeInsight.lineMarkerProvider language="JSON" implementationClass="dev.restudio.web.run.NpmScriptLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="textmate" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="TEXT" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
+    <pluginAdvertiserSuppressor implementation="dev.restudio.web.ide.WebAdvertiserSuppressor"/>
+    <configurationType implementation="dev.restudio.web.run.NpmScriptConfigurationType"/>
+    <configurationType implementation="dev.restudio.web.test.VitestConfigurationType"/>
+    <runConfigurationProducer implementation="dev.restudio.web.run.NpmScriptRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.web.test.VitestRunConfigurationProducer"/>
+  </extensions>
+</idea-plugin>

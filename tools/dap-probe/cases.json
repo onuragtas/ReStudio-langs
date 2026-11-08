@@ -266,5 +266,62 @@
       "find": "$this->assertTrue(true);"
     },
     "expectVariable": "$this"
+  },
+  "js-debug-npm": {
+    "root": "web/node-debug",
+    "transport": "tcp",
+    "command": [
+      "node",
+      "${home}/.restudio-dev/tools/js-debug/1.140.0/js-debug/src/dapDebugServer.js",
+      "${port}",
+      "127.0.0.1"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "pwa-node",
+      "request": "launch",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "start"
+      ],
+      "cwd": "${root}",
+      "console": "internalConsole"
+    },
+    "breakpoint": {
+      "file": "index.mjs",
+      "find": "let sum = 0"
+    },
+    "expectVariable": "prices"
+  },
+  "js-debug-vitest": {
+    "root": "web/vue",
+    "transport": "tcp",
+    "command": [
+      "node",
+      "${home}/.restudio-dev/tools/js-debug/1.140.0/js-debug/src/dapDebugServer.js",
+      "${port}",
+      "127.0.0.1"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "pwa-node",
+      "request": "launch",
+      "program": "${root}/node_modules/vitest/vitest.mjs",
+      "args": [
+        "run",
+        "src/lib/total.test.ts",
+        "-t",
+        "^total > adds the prices$"
+      ],
+      "cwd": "${root}",
+      "console": "internalConsole"
+    },
+    "breakpoint": {
+      "file": "src/lib/total.test.ts",
+      "find": "expect(total([1, 2, 3]))"
+    },
+    "expectVariable": "total",
+    "stopTimeoutMs": 120000
   }
 }
