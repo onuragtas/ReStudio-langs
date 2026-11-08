@@ -1,0 +1,161 @@
+{
+  "delve": {
+    "root": "go",
+    "transport": "tcp",
+    "command": [
+      "dlv",
+      "dap",
+      "--listen",
+      "127.0.0.1:${port}"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "go",
+      "request": "launch",
+      "mode": "test",
+      "program": "${root}/lib/greet"
+    },
+    "breakpoint": {
+      "file": "lib/greet/greet.go",
+      "find": "if name =="
+    },
+    "expectVariable": "name",
+    "stopTimeoutMs": 120000,
+    "launchTimeoutMs": 300000
+  },
+  "netcoredbg": {
+    "root": "dotnet",
+    "command": [
+      "${home}/.restudio-dev/tools/netcoredbg/3.2.0-1092/netcoredbg/netcoredbg",
+      "--interpreter=vscode",
+      "--log=${home}/.restudio-dev/logs/netcoredbg.log"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "/opt/homebrew/opt/dotnet/libexec/dotnet",
+      "cwd": "${root}/src/Shop.Cli",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "args": [
+        "${root}/src/Shop.Cli/bin/Debug/net10.0/Shop.Cli.dll"
+      ],
+      "env": {
+        "DOTNET_ROOT": "/opt/homebrew/opt/dotnet/libexec"
+      }
+    },
+    "breakpoint": {
+      "file": "src/Shop.Application/ProductService.cs",
+      "find": "var total = _products.Sum"
+    },
+    "expectVariable": "rate",
+    "env": {
+      "DOTNET_ROOT": "/opt/homebrew/opt/dotnet/libexec"
+    }
+  },
+  "netcoredbg-async": {
+    "root": "dotnet",
+    "command": [
+      "${home}/.restudio-dev/tools/netcoredbg/3.2.0-1092/netcoredbg/netcoredbg",
+      "--interpreter=vscode",
+      "--log=${home}/.restudio-dev/logs/netcoredbg-async.log"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "coreclr",
+      "request": "launch",
+      "program": "/opt/homebrew/opt/dotnet/libexec/dotnet",
+      "cwd": "${root}/src/Shop.Cli",
+      "stopAtEntry": false,
+      "console": "internalConsole",
+      "args": [
+        "${root}/src/Shop.Cli/bin/Debug/net10.0/Shop.Cli.dll"
+      ],
+      "env": {
+        "DOTNET_ROOT": "/opt/homebrew/opt/dotnet/libexec"
+      }
+    },
+    "breakpoint": {
+      "file": "src/Shop.Application/ProductService.cs",
+      "find": "await Task.Delay(10);"
+    },
+    "expectVariable": "rate",
+    "env": {
+      "DOTNET_ROOT": "/opt/homebrew/opt/dotnet/libexec"
+    }
+  },
+  "js-debug": {
+    "root": "web/node-debug",
+    "transport": "tcp",
+    "command": [
+      "node",
+      "${home}/.restudio-dev/tools/js-debug/1.140.0/js-debug/src/dapDebugServer.js",
+      "${port}",
+      "127.0.0.1"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "pwa-node",
+      "request": "launch",
+      "program": "${root}/index.mjs",
+      "cwd": "${root}",
+      "console": "internalConsole"
+    },
+    "breakpoint": {
+      "file": "index.mjs",
+      "find": "let sum = 0"
+    },
+    "expectVariable": "prices"
+  },
+  "php-debug": {
+    "root": "php",
+    "command": [
+      "node",
+      "${home}/.restudio-dev/tools/php-debug/1.40.2/vsix/extension/out/phpDebug.js"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "php",
+      "request": "launch",
+      "program": "${root}/scripts/probe.php",
+      "cwd": "${root}",
+      "port": 9003,
+      "runtimeExecutable": "/opt/homebrew/bin/php",
+      "externalConsole": false,
+      "runtimeArgs": [
+        "-dxdebug.mode=debug",
+        "-dxdebug.start_with_request=yes",
+        "-dxdebug.client_port=9003"
+      ]
+    },
+    "breakpoint": {
+      "file": "scripts/probe.php",
+      "find": "$sum = 0;"
+    },
+    "expectVariable": "$prices"
+  },
+  "dart-flutter-test": {
+    "root": "flutter",
+    "command": [
+      "${home}/flutter/bin/flutter",
+      "debug-adapter",
+      "--test"
+    ],
+    "launch": {
+      "name": "probe",
+      "type": "dart",
+      "request": "launch",
+      "program": "test/widget_test.dart",
+      "cwd": "${root}"
+    },
+    "breakpoint": {
+      "file": "test/widget_test.dart",
+      "find": "await tester.pumpWidget"
+    },
+    "expectVariable": "tester",
+    "stopTimeoutMs": 180000,
+    "launchTimeoutMs": 180000,
+    "endTimeoutMs": 90000
+  }
+}
