@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+.card {
+  @apply rounded-lg p-4 shadow;
+}
