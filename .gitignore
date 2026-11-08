@@ -6,3 +6,4 @@ build/
 .gradle/
 .kotlin/
 .intellijPlatform/
+__debug_bin*
