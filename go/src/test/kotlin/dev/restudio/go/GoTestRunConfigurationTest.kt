@@ -15,6 +15,7 @@ import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.entrypoints.EntryPointLocation
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.go.debug.DelveDescriptorFactory
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.isAdvertisementSuppressed
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.search.GlobalSearchScope
 import dev.restudio.go.test.GoTestJsonTranslator
@@ -91,6 +92,11 @@ class GoTestRunConfigurationTest : BasePlatformTestCase() {
     assertEquals("greet_test.go", descriptor.file.name)
     val text = String(descriptor.file.contentsToByteArray())
     assertEquals(text.indexOf("func TestHello"), descriptor.offset)
+  }
+
+  fun `test the IDE does not advertise another plugin for Go files`() {
+    val file = myFixture.configureByText("main.go", "package main\n").virtualFile
+    assertTrue(isAdvertisementSuppressed(project, file))
   }
 
   fun `test go test output on the sample project fills the tree`() {

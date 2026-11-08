@@ -33,5 +33,6 @@
     <runConfigurationProducer implementation="dev.restudio.dotnet.test.DotnetTestRunConfigurationProducer"/>
     <stepsBeforeRunProvider implementation="dev.restudio.dotnet.run.DotnetBuildBeforeRunTaskProvider"/>
     <notificationGroup id="ReStudio .NET" displayType="BALLOON"/>
+    <pluginAdvertiserSuppressor implementation="dev.restudio.dotnet.ide.DotnetAdvertiserSuppressor"/>
   </extensions>
 </idea-plugin>

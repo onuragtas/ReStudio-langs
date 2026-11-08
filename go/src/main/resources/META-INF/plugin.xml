@@ -30,5 +30,6 @@
     <configurationType implementation="dev.restudio.go.test.GoTestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.go.run.GoRunConfigurationProducer"/>
     <runConfigurationProducer implementation="dev.restudio.go.test.GoTestRunConfigurationProducer"/>
+    <pluginAdvertiserSuppressor implementation="dev.restudio.go.ide.GoAdvertiserSuppressor"/>
   </extensions>
 </idea-plugin>

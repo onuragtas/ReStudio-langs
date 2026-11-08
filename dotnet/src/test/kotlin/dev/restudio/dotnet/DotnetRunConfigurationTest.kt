@@ -11,6 +11,7 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.isAdvertisementSuppressed
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.psi.PsiFile
@@ -100,6 +101,11 @@ class DotnetRunConfigurationTest : BasePlatformTestCase() {
     val descriptor = locations.single().openFileDescriptor!!
     assertEquals("ProductTests.cs", descriptor.file.name)
     assertEquals(String(descriptor.file.contentsToByteArray()).indexOf("public void PriceWithTaxAddsTheRate"), descriptor.offset)
+  }
+
+  fun `test the IDE does not advertise another IDE for C# files`() {
+    assertTrue(isAdvertisementSuppressed(project, addApp().virtualFile))
+    assertFalse(isAdvertisementSuppressed(project, myFixture.addFileToProject("notes.txt", "").virtualFile))
   }
 
   fun `test Roslyn opens the solution of the sample`() {
