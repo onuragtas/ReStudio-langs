@@ -18,6 +18,7 @@ export JAVA_HOME=/opt/homebrew/opt/openjdk@25
 ./gradlew :go:test          # unit and platform tests
 ./gradlew :go:buildPlugin   # go/build/distributions/*.zip
 ./gradlew :go:runFork       # starts the local fork build with the plugin
+tools/open-ide.sh go         # opens testdata/go in the fork build (data: ~/.restudio-dev/ide-data)
 ```
 
 ## Rules
