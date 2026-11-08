@@ -15,6 +15,8 @@ import dev.restudio.web.sdk.NodeSdk
 import org.eclipse.lsp4j.services.LanguageServer
 import java.nio.file.Path
 
+internal fun connectionFor(project: Project, command: List<String>): StreamConnectionProvider = connection(project, command)
+
 private fun connection(project: Project, command: List<String>): StreamConnectionProvider {
   val commandLine = GeneralCommandLine(command).withEnvironment(NodeSdk.environment())
   project.basePath?.let { commandLine.withWorkingDirectory(Path.of(it)) }

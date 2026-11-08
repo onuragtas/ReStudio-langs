@@ -37,6 +37,19 @@
     <languageMapping language="TEXT" serverId="restudio.tailwind" languageId="css"
                      documentMatcher="dev.restudio.web.lsp.TailwindFileMatcher"/>
 
+    <!-- ESLint starts only in a project with ESLint installed. ESLint LS needs the right language ID for each file. -->
+    <server id="restudio.eslint" name="ESLint (ReStudio)" factoryClass="dev.restudio.web.lsp.EslintServerFactory"/>
+    <languageMapping language="textmate" serverId="restudio.eslint" languageId="typescript"
+                     documentMatcher="dev.restudio.web.lsp.EslintTypeScriptMatcher"/>
+    <languageMapping language="textmate" serverId="restudio.eslint" languageId="typescriptreact"
+                     documentMatcher="dev.restudio.web.lsp.EslintTypeScriptReactMatcher"/>
+    <languageMapping language="textmate" serverId="restudio.eslint" languageId="javascript"
+                     documentMatcher="dev.restudio.web.lsp.EslintJavaScriptMatcher"/>
+    <languageMapping language="TEXT" serverId="restudio.eslint" languageId="javascript"
+                     documentMatcher="dev.restudio.web.lsp.EslintJavaScriptMatcher"/>
+    <languageMapping language="textmate" serverId="restudio.eslint" languageId="javascriptreact"
+                     documentMatcher="dev.restudio.web.lsp.EslintJavaScriptReactMatcher"/>
+
     <debugAdapterServer id="restudio.js-debug" name="js-debug (ReStudio)"
                         factoryClass="dev.restudio.web.debug.JsDebugDescriptorFactory"/>
   </extensions>
@@ -48,6 +61,9 @@
     <codeInsight.lineMarkerProvider language="TEXT" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.web.ide.WebAdvertiserSuppressor"/>
     <textmate.bundleProvider implementation="dev.restudio.web.ide.VueBundleProvider"/>
+    <!-- Prettier comes before the language server formatting, but only in a project with Prettier installed. -->
+    <formattingService order="first" implementation="dev.restudio.web.ide.PrettierFormattingService"/>
+    <notificationGroup id="ReStudio Web" displayType="BALLOON"/>
     <configurationType implementation="dev.restudio.web.run.NpmScriptConfigurationType"/>
     <configurationType implementation="dev.restudio.web.test.VitestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.web.run.NpmScriptRunConfigurationProducer"/>
