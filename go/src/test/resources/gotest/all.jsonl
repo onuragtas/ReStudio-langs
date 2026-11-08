@@ -1,0 +1,16 @@
+{"Time":"2026-11-08T11:12:49.377255+03:00","Action":"start","Package":"example.com/shop/lib/greet"}
+{"Time":"2026-11-08T11:12:49.377903+03:00","Action":"run","Package":"example.com/shop/lib/greet","Test":"TestHello"}
+{"Time":"2026-11-08T11:12:49.377909+03:00","Action":"output","Package":"example.com/shop/lib/greet","Test":"TestHello","Output":"=== RUN   TestHello\n","OutputType":"frame"}
+{"Time":"2026-11-08T11:12:49.377924+03:00","Action":"output","Package":"example.com/shop/lib/greet","Test":"TestHello","Output":"--- PASS: TestHello (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-08T11:12:49.377933+03:00","Action":"pass","Package":"example.com/shop/lib/greet","Test":"TestHello","Elapsed":0}
+{"Time":"2026-11-08T11:12:49.377955+03:00","Action":"output","Package":"example.com/shop/lib/greet","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-08T11:12:49.377959+03:00","Action":"output","Package":"example.com/shop/lib/greet","Output":"ok  \texample.com/shop/lib/greet\t(cached)\n"}
+{"Time":"2026-11-08T11:12:49.377966+03:00","Action":"pass","Package":"example.com/shop/lib/greet","Elapsed":0.001}
+{"Time":"2026-11-08T11:12:49.82349+03:00","Action":"start","Package":"example.com/shop/api/cmd/server"}
+{"Time":"2026-11-08T11:12:50.200987+03:00","Action":"run","Package":"example.com/shop/api/cmd/server","Test":"TestHandler"}
+{"Time":"2026-11-08T11:12:50.201305+03:00","Action":"output","Package":"example.com/shop/api/cmd/server","Test":"TestHandler","Output":"=== RUN   TestHandler\n","OutputType":"frame"}
+{"Time":"2026-11-08T11:12:50.201366+03:00","Action":"output","Package":"example.com/shop/api/cmd/server","Test":"TestHandler","Output":"--- PASS: TestHandler (0.00s)\n","OutputType":"frame"}
+{"Time":"2026-11-08T11:12:50.201378+03:00","Action":"pass","Package":"example.com/shop/api/cmd/server","Test":"TestHandler","Elapsed":0}
+{"Time":"2026-11-08T11:12:50.201387+03:00","Action":"output","Package":"example.com/shop/api/cmd/server","Output":"PASS\n","OutputType":"frame"}
+{"Time":"2026-11-08T11:12:50.202219+03:00","Action":"output","Package":"example.com/shop/api/cmd/server","Output":"ok  \texample.com/shop/api/cmd/server\t0.379s\n"}
+{"Time":"2026-11-08T11:12:50.203493+03:00","Action":"pass","Package":"example.com/shop/api/cmd/server","Elapsed":0.38}

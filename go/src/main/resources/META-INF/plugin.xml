@@ -27,6 +27,8 @@
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.lineMarkerProvider language="textmate"
                                     implementationClass="dev.restudio.go.run.GoLineMarkerProvider"/>
+    <configurationType implementation="dev.restudio.go.test.GoTestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.go.run.GoRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.go.test.GoTestRunConfigurationProducer"/>
   </extensions>
 </idea-plugin>

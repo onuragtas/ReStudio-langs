@@ -16,6 +16,9 @@ dependencies {
   intellijPlatform {
     intellijIdea(providers.gradleProperty("restudio.platformVersion"))
     plugin("com.redhat.devtools.lsp4ij", providers.gradleProperty("restudio.lsp4ijVersion").get())
+    bundledModule("intellij.platform.smRunner")
+    bundledModule("intellij.platform.testRunner")
+    bundledModule("intellij.libraries.teamcity.service.messages")
     testFramework(TestFrameworkType.Platform)
   }
   testImplementation("junit:junit:4.13.2")

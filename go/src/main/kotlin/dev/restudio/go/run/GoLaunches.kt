@@ -48,12 +48,15 @@ object GoLaunches {
           "mode" to "test",
           "program" to packageDir,
           "cwd" to packageDir,
-          "args" to listOf("-test.run", "^${entryPoint.name}$"),
+          "args" to listOf("-test.run", testPattern(entryPoint)),
         ),
         environment = environment,
       )
     }
   }
+
+  /** Returns the `-run` pattern that matches only [entryPoint]. */
+  fun testPattern(entryPoint: EntryPoint): String = "^${entryPoint.name}$"
 
   /** Returns the nearest parent directory with a `go.mod` file. */
   private fun moduleRoot(file: VirtualFile): VirtualFile? =
