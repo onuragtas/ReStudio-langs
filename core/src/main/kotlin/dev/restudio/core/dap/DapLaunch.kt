@@ -12,6 +12,8 @@ import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
  *
  * [readyPattern] is the adapter output that tells LSP4IJ the address and the port.
  * [launch] is the JSON of the DAP `launch` request.
+ * [serverId] is the ID of a registered LSP4IJ debug adapter. LSP4IJ asks it which files take breakpoints.
+ * When it is `null`, LSP4IJ sends no breakpoint to the adapter.
  */
 data class DapLaunch(
   val adapterName: String,
@@ -21,9 +23,10 @@ data class DapLaunch(
   val file: String,
   val launch: String,
   val environment: Map<String, String> = emptyMap(),
+  val serverId: String? = null,
 ) {
   fun applyTo(configuration: DAPRunConfiguration) {
-    configuration.serverId = null
+    configuration.serverId = serverId
     configuration.serverName = adapterName
     configuration.command = command
     configuration.debugServerWaitStrategy = DebugServerWaitStrategy.TRACE
@@ -37,7 +40,7 @@ data class DapLaunch(
 
   /** Returns `true` when [configuration] already starts this launch. */
   fun matches(configuration: DAPRunConfiguration): Boolean =
-    configuration.command == command && configuration.launchConfiguration == launch
+    configuration.command == command && configuration.launchConfiguration == launch && configuration.serverId == serverId
 
   companion object {
     /** The ID of the LSP4IJ "Debug Adapter Protocol" run configuration type. */

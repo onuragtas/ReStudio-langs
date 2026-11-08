@@ -14,7 +14,9 @@ import com.redhat.devtools.lsp4ij.dap.DebugAdapterManager
 import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.entrypoints.EntryPointLocation
 import dev.restudio.core.sdk.ToolLocator
+import dev.restudio.go.debug.DelveDescriptorFactory
 import dev.restudio.go.test.GoTestJsonTranslator
+import dev.restudio.go.test.GoTestRunConfigurationOptions
 import dev.restudio.go.test.GoTestRunConfiguration
 import dev.restudio.go.test.GoTestRunState
 import java.nio.file.Path
@@ -62,6 +64,19 @@ class GoTestRunConfigurationTest : BasePlatformTestCase() {
     val file = myFixture.configureByText("greet.go", "package greet\n\nfunc Hello() string {\n\treturn \"\"\n}\n").virtualFile
     // LSP4IJ asks this in DAPBreakpointType.canPutAt.
     assertTrue(DebugAdapterManager.getInstance().isDebuggableFile(file, project))
+  }
+
+  fun `test the debug session sends Go breakpoints to Delve`() {
+    val configuration = configurationForTest("TestBye")
+    assertEquals(DelveDescriptorFactory.SERVER_ID, configuration.serverId)
+    val goFile = myFixture.configureByText("greet.go", "package greet\n").virtualFile
+    val textFile = myFixture.configureByText("notes.txt", "text\n").virtualFile
+    // DAPBreakpointHandlerBase sends a breakpoint only when the session descriptor accepts its file.
+    val factory = DebugAdapterManager.getInstance().getDebugAdapterServerById(configuration.serverId)!!.factory
+    val environment = ExecutionEnvironmentBuilder.create(DefaultRunExecutor.getRunExecutorInstance(), configuration).build()
+    val descriptor = factory.createDebugAdapterDescriptor(GoTestRunConfigurationOptions(), environment)
+    assertTrue(descriptor.isDebuggableFile(goFile, project))
+    assertFalse(descriptor.isDebuggableFile(textFile, project))
   }
 
   fun `test go test output on the sample project fills the tree`() {

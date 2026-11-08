@@ -6,6 +6,7 @@ import dev.restudio.core.dap.jsonObject
 import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.go.GoBundle
+import dev.restudio.go.debug.DelveDescriptorFactory
 
 /** Builds the Delve launch for a Go entry point. */
 object GoLaunches {
@@ -37,6 +38,7 @@ object GoLaunches {
           "dlvCwd" to packageDir,
         ),
         environment = environment,
+        serverId = DelveDescriptorFactory.SERVER_ID,
       )
       EntryPoint.Kind.TEST -> GoBundle.message("run.configuration.test", entryPoint.name) to DapLaunch(
         adapterName = DELVE,
@@ -55,6 +57,7 @@ object GoLaunches {
           "args" to listOf("-test.run", testPattern(entryPoint)),
         ),
         environment = environment,
+        serverId = DelveDescriptorFactory.SERVER_ID,
       )
     }
   }
