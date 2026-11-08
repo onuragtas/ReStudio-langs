@@ -1,0 +1,6 @@
+<!-- Shared code of the ReStudio language plugins. Each language plugin embeds this module. -->
+<idea-plugin>
+  <dependencies>
+    <plugin id="com.redhat.devtools.lsp4ij"/>
+  </dependencies>
+</idea-plugin>

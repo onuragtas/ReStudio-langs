@@ -11,6 +11,10 @@
   <depends>com.redhat.devtools.lsp4ij</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
 
+  <content>
+    <module name="restudio-langs.core" loading="embedded"/>
+  </content>
+
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
     <server id="restudio.gopls"
             name="gopls (ReStudio)"
