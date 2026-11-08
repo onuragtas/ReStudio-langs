@@ -1,0 +1,28 @@
+<idea-plugin>
+  <id>dev.restudio.go</id>
+  <name>ReStudio Go</name>
+  <vendor>ReStudio</vendor>
+  <description><![CDATA[
+    Go support through gopls and Delve: code insight, run and debug gutter icons for
+    <code>func main()</code> and test functions.
+  ]]></description>
+
+  <depends>com.intellij.modules.platform</depends>
+  <depends>com.redhat.devtools.lsp4ij</depends>
+  <depends>org.jetbrains.plugins.textmate</depends>
+
+  <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
+    <server id="restudio.gopls"
+            name="gopls (ReStudio)"
+            factoryClass="dev.restudio.go.lsp.GoplsServerFactory"/>
+    <fileNamePatternMapping patterns="*.go"
+                            serverId="restudio.gopls"
+                            languageId="go"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <codeInsight.lineMarkerProvider language="textmate"
+                                    implementationClass="dev.restudio.go.run.GoLineMarkerProvider"/>
+    <runConfigurationProducer implementation="dev.restudio.go.run.GoRunConfigurationProducer"/>
+  </extensions>
+</idea-plugin>

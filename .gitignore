@@ -2,3 +2,7 @@
 .dap-traces/
 .test-traces/
 .idea/
+build/
+.gradle/
+.kotlin/
+.intellijPlatform/
