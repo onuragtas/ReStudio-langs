@@ -13,12 +13,17 @@ object DotnetLaunches {
    *
    * netcoredbg must start the real `dotnet` host with the assembly as its argument. With the Homebrew script it fails.
    * netcoredbg speaks DAP on its standard streams, so the launch has no ready pattern.
+   * [profile] is a `launchSettings.json` profile. Its arguments, environment and URLs go into the launch.
    */
-  fun debug(project: DotnetProject, file: String): DapLaunch? {
+  fun debug(project: DotnetProject, file: String, profile: LaunchProfile? = null): DapLaunch? {
     val targetPath = project.targetPath ?: return null
     val netcoredbg = DotnetSdk.netcoredbg() ?: return null
     val host = DotnetSdk.host() ?: return null
     val environment = DotnetSdk.environment()
+    val programEnvironment = environment.filterKeys { it != "PATH" } + profile?.environment.orEmpty()
+    // A profile path can hold an MSBuild macro such as $(ProjectDir). The plugin cannot expand it, so it uses the project directory.
+    val cwd = profile?.workingDirectory?.takeIf { it.isNotBlank() && !it.contains("$(") }?.let { project.directory.resolve(it).normalize().toString() }
+              ?: project.directory.toString()
     return DapLaunch(
       adapterName = ADAPTER_NAME,
       command = "$netcoredbg --interpreter=vscode",
@@ -30,11 +35,11 @@ object DotnetLaunches {
         "name" to project.name,
         "request" to "launch",
         "program" to host.toString(),
-        "args" to listOf(targetPath.toString()),
-        "cwd" to project.directory.toString(),
+        "args" to listOf(targetPath.toString()) + profile?.arguments.orEmpty(),
+        "cwd" to cwd,
         "stopAtEntry" to false,
         "console" to "internalConsole",
-        "env" to environment.filterKeys { it != "PATH" },
+        "env" to programEnvironment,
       ),
       environment = environment,
       serverId = NetcoredbgDescriptorFactory.SERVER_ID,

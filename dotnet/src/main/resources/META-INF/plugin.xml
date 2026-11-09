@@ -43,11 +43,27 @@
     <stepsBeforeRunProvider implementation="dev.restudio.dotnet.test.DotnetTestHostBeforeRunTaskProvider"/>
     <notificationGroup id="ReStudio .NET" displayType="BALLOON"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.dotnet.ide.DotnetAdvertiserSuppressor"/>
+    <consoleFilterProvider implementation="dev.restudio.dotnet.run.DotnetBuildErrorFilterProvider"/>
+    <postStartupActivity implementation="dev.restudio.dotnet.project.DotnetModuleSyncActivity"/>
+    <applicationConfigurable parentId="tools"
+                             instance="dev.restudio.dotnet.settings.DotnetSettingsConfigurable"
+                             id="restudio.dotnet.settings"
+                             key="settings.display.name"/>
+    <toolWindow id="NuGet"
+                anchor="bottom"
+                icon="AllIcons.Nodes.PpLib"
+                factoryClass="dev.restudio.dotnet.nuget.NuGetToolWindowFactory"/>
+    <newProjectWizard.generator implementation="dev.restudio.dotnet.wizard.DotnetNewProjectWizard"/>
   </extensions>
 
   <actions>
     <!-- The IDs are the Roslyn LS code lens commands. LSP4IJ runs the action with the same ID. -->
     <action id="dotnet.test.run" class="dev.restudio.dotnet.lsp.DotnetTestRunCommandAction"/>
     <action id="roslyn.client.peekReferences" class="dev.restudio.dotnet.lsp.RoslynPeekReferencesCommandAction"/>
+    <group id="ReStudio.Dotnet.ToolsGroup" popup="true" icon="AllIcons.Nodes.Module">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+      <action id="ReStudio.Dotnet.Restore" class="dev.restudio.dotnet.project.DotnetRestoreAction"/>
+      <action id="ReStudio.Dotnet.SyncModules" class="dev.restudio.dotnet.project.DotnetSyncModulesAction"/>
+    </group>
   </actions>
 </idea-plugin>

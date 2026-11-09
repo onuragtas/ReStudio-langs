@@ -16,7 +16,9 @@ class DotnetRunConfigurationProducer : LazyRunConfigurationProducer<DotnetRunCon
 
   override fun setupConfigurationFromContext(configuration: DotnetRunConfiguration, context: ConfigurationContext, sourceElement: Ref<PsiElement>): Boolean {
     val (project, file) = projectFor(context) ?: return false
-    DotnetLaunches.debug(project, file)?.applyTo(configuration)
+    DotnetLaunches.debug(project, file, LaunchSettings.select(LaunchSettings.read(project.directory), null))?.applyTo(configuration)
+    configuration.launchProfile = ""
+    configuration.appliedLaunchProfile = ""
     configuration.projectFile = project.file.toString()
     configuration.workingDirectory = project.directory.toString()
     configuration.name = DotnetBundle.message("run.configuration.name", project.name)
