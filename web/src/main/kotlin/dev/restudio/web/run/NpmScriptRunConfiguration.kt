@@ -23,13 +23,15 @@ import com.intellij.psi.PsiElement
 import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
 import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfigurationOptions
 import dev.restudio.core.entrypoints.ContextEntryPoints
-import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.web.WebBundle
 import dev.restudio.web.sdk.NodeSdk
 import java.nio.charset.StandardCharsets
 import java.nio.file.Path
 
-/** Runs a `package.json` script with the package manager of the project, or debugs it with js-debug. */
+/**
+ * Runs a `package.json` script with the package manager of the project, or debugs it with js-debug.
+ * The run puts `node_modules/.bin` of the package first in the PATH, also for the tools that the script starts.
+ */
 class NpmScriptRunConfiguration(project: Project, factory: ConfigurationFactory, name: String) : DAPRunConfiguration(project, factory, name) {
   override fun getOptions(): NpmScriptRunConfigurationOptions = super.getOptions() as NpmScriptRunConfigurationOptions
 
@@ -53,10 +55,10 @@ class NpmScriptRunState(environment: ExecutionEnvironment, private val configura
   fun commandLine(): GeneralCommandLine {
     val root = Path.of(configuration.workingDirectory)
     val manager = NodeSdk.packageManager(root)
-    val command = ToolLocator.find(manager) ?: throw ExecutionException(WebBundle.message("tool.not.found", manager))
+    val command = NodeSdk.findTool(manager, root) ?: throw ExecutionException(WebBundle.message("tool.not.found", manager))
     return GeneralCommandLine(command.toString(), "run", configuration.script)
       .withWorkingDirectory(root)
-      .withEnvironment(NodeSdk.environment())
+      .withEnvironment(NodeSdk.environment(root))
       .withCharset(StandardCharsets.UTF_8)
   }
 
@@ -94,7 +96,7 @@ class NpmScriptRunConfigurationProducer : LazyRunConfigurationProducer<NpmScript
     val (file, script) = scriptFor(context) ?: return false
     val root = file.parent.path
     val manager = NodeSdk.packageManager(Path.of(root))
-    val runtime = ToolLocator.find(manager)?.toString() ?: manager
+    val runtime = NodeSdk.command(manager, root)
     JsDebugLaunches.node(script, root, file.path, mapOf("runtimeExecutable" to runtime, "runtimeArgs" to listOf("run", script)))?.applyTo(configuration)
     configuration.script = script
     configuration.workingDirectory = root

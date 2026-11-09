@@ -4,19 +4,16 @@ import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.entrypoints.EntryPointDetector
 
 /**
- * Finds the `describe`, `it` and `test` calls of a test file (`*.test.*` or `*.spec.*`).
+ * Finds the `describe`, `it` and `test` calls of a test file (`*.test.*` or `*.spec.*`). Vitest and Jest use it.
  *
- * Each call with a string name is a [EntryPoint.Kind.TEST]. Its name is the full name that Vitest 5 matches with `-t`:
- * the names of the enclosing `describe` calls and its own name, joined with [SEPARATOR]. The JSON reporter writes
- * the names with a space instead, but `-t` does not match that form (recorded on the Vue sample).
+ * Each call with a string name is a [EntryPoint.Kind.TEST]. Its name is the full name that the runner matches with
+ * `-t`: the names of the enclosing `describe` calls and its own name, joined with [separator].
  * A modifier such as `.only` or `.each(table)` is allowed. A name that is not a string literal is skipped.
  */
-object VitestEntryPointDetector : EntryPointDetector {
+open class TestCallDetector(val separator: String) : EntryPointDetector {
   private val TEST_FILE = Regex("""\.(test|spec)\.[cm]?[jt]sx?$""")
   // `.each(table)` puts one more argument list before the name. The table must have no parentheses.
   private val CALL = Regex("""\b(describe|suite|it|test)(?:\.\w+)*(?:\s*\([^()]*\))?\s*\(\s*(['"`])((?:(?!\2)[^\\]|\\.)*)\2""")
-
-  const val SEPARATOR: String = " > "
 
   fun isTestFile(fileName: String): Boolean = TEST_FILE.containsMatchIn(fileName)
 
@@ -30,7 +27,7 @@ object VitestEntryPointDetector : EntryPointDetector {
     }.toList()
     return calls.map { call ->
       val parents = calls.filter { it.start < call.start && it.end > call.end }.map { it.name }
-      EntryPoint(EntryPoint.Kind.TEST, (parents + call.name).joinToString(SEPARATOR), call.start)
+      EntryPoint(EntryPoint.Kind.TEST, (parents + call.name).joinToString(separator), call.start)
     }
   }
 
@@ -55,4 +52,17 @@ object VitestEntryPointDetector : EntryPointDetector {
     }
     return text.length
   }
+}
+
+/**
+ * The Vitest form of [TestCallDetector]. Vitest 5 matches `-t` with the names joined with [SEPARATOR]. The JSON
+ * reporter writes the names with a space instead, but `-t` does not match that form (recorded on the Vue sample).
+ */
+object VitestEntryPointDetector : TestCallDetector(" > ") {
+  const val SEPARATOR: String = " > "
+}
+
+/** The Jest form of [TestCallDetector]. Jest matches `-t` with the full name: the names joined with a space. */
+object JestEntryPointDetector : TestCallDetector(" ") {
+  const val SEPARATOR: String = " "
 }

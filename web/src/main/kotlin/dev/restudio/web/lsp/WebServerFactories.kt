@@ -17,23 +17,49 @@ import java.nio.file.Path
 
 internal fun connectionFor(project: Project, command: List<String>): StreamConnectionProvider = connection(project, command)
 
+/** Finds [name] in `node_modules/.bin` of the project, then on the PATH. */
+internal fun toolCommand(project: Project, name: String): String = NodeSdk.command(name, project.basePath)
+
 private fun connection(project: Project, command: List<String>): StreamConnectionProvider {
-  val commandLine = GeneralCommandLine(command).withEnvironment(NodeSdk.environment())
-  project.basePath?.let { commandLine.withWorkingDirectory(Path.of(it)) }
+  val root = project.basePath?.let { Path.of(it) }
+  val commandLine = GeneralCommandLine(command).withEnvironment(NodeSdk.environment(root))
+  root?.let { commandLine.withWorkingDirectory(it) }
   return OSProcessStreamConnectionProvider(commandLine)
 }
 
 /**
- * Starts vtsls for TypeScript, JavaScript and the script part of Vue files. vtsls brings its own TypeScript when the
- * project has TypeScript 7. Its client loads `@vue/typescript-plugin` (see [VueBridge]).
+ * Starts the TypeScript server for TypeScript, JavaScript and the script part of Vue files.
+ *
+ * In a project with TypeScript 7 or later, the server is the `tsc --lsp` of the project (see [TypeScriptServer]).
+ * Else it is vtsls. vtsls brings its own TypeScript. Its client loads `@vue/typescript-plugin` (see [VueBridge]).
  */
 class VtslsServerFactory : LanguageServerFactory {
   override fun createConnectionProvider(project: Project): StreamConnectionProvider =
-    connection(project, listOf(ToolLocator.find("vtsls")?.toString() ?: "vtsls", "--stdio"))
+    connection(project, TypeScriptServer.projectTsc(project)?.let { listOf(it.toString(), "--lsp", "--stdio") }
+                        ?: listOf(toolCommand(project, "vtsls"), "--stdio"))
 
-  override fun createLanguageClient(project: Project): LanguageClientImpl = VtslsLanguageClient(project)
+  override fun createLanguageClient(project: Project): LanguageClientImpl =
+    if (TypeScriptServer.projectTsc(project) != null) LanguageClientImpl(project) else VtslsLanguageClient(project)
 
   override fun createClientFeatures(): LSPClientFeatures = TracingClientFeatures()
+}
+
+/**
+ * Selects the TypeScript server of a project.
+ *
+ * TypeScript 7 has a language server mode: `tsc --lsp --stdio` (LSP probe case tsgo-react). The mode has no tsserver
+ * plugins. Thus a project with Vue keeps vtsls, because Vue needs `@vue/typescript-plugin`.
+ */
+object TypeScriptServer {
+  /** The `tsc` of the project when the project has TypeScript 7 or later and no Vue, else `null`. */
+  fun projectTsc(project: Project): Path? = project.basePath?.let { projectTsc(Path.of(it)) }
+
+  fun projectTsc(root: Path): Path? {
+    if (java.nio.file.Files.isDirectory(root.resolve("node_modules/vue"))) return null
+    val major = NodeSdk.typeScriptMajorVersion(root) ?: return null
+    if (major < 7) return null
+    return NodeSdk.binDirectory(root).resolve("tsc").takeIf { java.nio.file.Files.isExecutable(it) }
+  }
 }
 
 /** Starts the Vue language server. It sends its TypeScript work to vtsls through [VueLanguageClient]. */
@@ -58,7 +84,7 @@ class VueServerFactory : LanguageServerFactory {
  */
 class AngularServerFactory : LanguageServerFactory {
   override fun createConnectionProvider(project: Project): StreamConnectionProvider {
-    val ngserver = ToolLocator.find("ngserver")
+    val ngserver = NodeSdk.findTool("ngserver", project.basePath?.let { Path.of(it) })
     val serverModules = ngserver?.toRealPath()?.parent?.parent?.resolve("node_modules")?.toString()
     val projectModules = project.basePath?.let { Path.of(it, "node_modules").toString() }
     return connection(project, listOf(
@@ -72,7 +98,7 @@ class AngularServerFactory : LanguageServerFactory {
 /** Starts the Tailwind CSS language server. It finds the Tailwind 4 entry CSS file by itself. */
 class TailwindServerFactory : LanguageServerFactory {
   override fun createConnectionProvider(project: Project): StreamConnectionProvider =
-    connection(project, listOf(ToolLocator.find("tailwindcss-language-server")?.toString() ?: "tailwindcss-language-server", "--stdio"))
+    connection(project, listOf(toolCommand(project, "tailwindcss-language-server"), "--stdio"))
 }
 
 /** Matches the files of a project that has [marker] in its root, for example `angular.json`. */
@@ -84,10 +110,22 @@ abstract class ProjectMarkerMatcher(private val extensions: Set<String>, private
 /** The HTML templates of an Angular project. */
 class AngularTemplateMatcher : ProjectMarkerMatcher(setOf("html"), { it.findChild("angular.json") != null })
 
-/** The HTML and CSS files of a project with `tailwindcss` in its `package.json`. */
-class TailwindFileMatcher : ProjectMarkerMatcher(setOf("html", "css"), { directory ->
+/** Returns `true` when the `package.json` of [directory] has `tailwindcss`. */
+private fun hasTailwind(directory: VirtualFile): Boolean =
   directory.findChild("package.json")?.let { String(it.contentsToByteArray()).contains("\"tailwindcss\"") } == true
-})
+
+/** The HTML and CSS files of a project with `tailwindcss` in its `package.json`. */
+class TailwindFileMatcher : ProjectMarkerMatcher(setOf("html", "css"), ::hasTailwind)
+
+/**
+ * The files of a Tailwind project that TextMate colors, each with its own LSP language ID. Tailwind LS reads the
+ * language ID to find the class attributes (`className` in JSX, `class` in Vue).
+ */
+class TailwindTypeScriptReactMatcher : ProjectMarkerMatcher(setOf("tsx"), ::hasTailwind)
+
+class TailwindJavaScriptReactMatcher : ProjectMarkerMatcher(setOf("jsx"), ::hasTailwind)
+
+class TailwindVueMatcher : ProjectMarkerMatcher(setOf("vue"), ::hasTailwind)
 
 /**
  * At the debug log level of `dev.restudio`, runs a server through `stdio-tee.mjs`. The script writes the raw bytes of

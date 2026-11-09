@@ -2,6 +2,7 @@ package dev.restudio.web.sdk
 
 import com.intellij.openapi.vfs.VirtualFile
 import dev.restudio.core.sdk.ToolLocator
+import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -32,5 +33,30 @@ object NodeSdk {
     }
   }
 
-  fun environment(): Map<String, String> = mapOf("PATH" to ToolLocator.childPath())
+  /** The `node_modules/.bin` directory of [root]. The package managers install the project tools there. */
+  fun binDirectory(root: Path): Path = root.resolve("node_modules/.bin")
+
+  /** Finds [name] first in `node_modules/.bin` of [root], then with [ToolLocator]. */
+  fun findTool(name: String, root: Path?): Path? =
+    root?.let { binDirectory(it).resolve(name) }?.takeIf { Files.isExecutable(it) } ?: ToolLocator.find(name)
+
+  /** Finds [name] like [findTool]. Returns the bare name when the tool is not installed. */
+  fun command(name: String, root: String?): String = findTool(name, root?.let { Path.of(it) })?.toString() ?: name
+
+  /** The environment of a child process. When [root] is set, `node_modules/.bin` of [root] comes first in the PATH. */
+  fun environment(root: Path? = null): Map<String, String> {
+    val path = ToolLocator.childPath()
+    val bin = root?.let { binDirectory(it) }?.takeIf { Files.isDirectory(it) } ?: return mapOf("PATH" to path)
+    return mapOf("PATH" to bin.toString() + File.pathSeparator + path)
+  }
+
+  /** The major version of the `typescript` package in `node_modules` of [root], or `null` when it is not installed. */
+  fun typeScriptMajorVersion(root: Path): Int? {
+    val manifest = root.resolve("node_modules/typescript/package.json")
+    if (!Files.isRegularFile(manifest)) return null
+    val version = VERSION.find(Files.readString(manifest))?.groupValues?.get(1) ?: return null
+    return version.toIntOrNull()
+  }
+
+  private val VERSION = Regex(""""version"\s*:\s*"(\d+)\.""")
 }

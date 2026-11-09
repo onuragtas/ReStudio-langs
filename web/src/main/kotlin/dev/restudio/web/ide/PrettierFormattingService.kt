@@ -63,7 +63,7 @@ class Prettier(private val root: Path, private val script: Path) {
     val node = NodeSdk.node()?.toString() ?: "node"
     return GeneralCommandLine(node, script.toString(), "--stdin-filepath", filePath)
       .withWorkingDirectory(root)
-      .withEnvironment(NodeSdk.environment())
+      .withEnvironment(NodeSdk.environment(root))
       .withCharset(StandardCharsets.UTF_8)
   }
 

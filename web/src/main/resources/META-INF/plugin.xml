@@ -3,8 +3,8 @@
   <name>ReStudio Web</name>
   <vendor>ReStudio</vendor>
   <description><![CDATA[
-    TypeScript, JavaScript, Angular and Tailwind support through vtsls and the framework language servers,
-    npm script runs, js-debug, and the Vitest test tree.
+    TypeScript, JavaScript, HTML, CSS, JSON, Angular and Tailwind support through vtsls, tsc --lsp and the framework language servers,
+    npm script runs, js-debug for Node and Chrome, the Vitest and Jest test trees, and a New Project generator.
   ]]></description>
 
   <resource-bundle>messages.WebBundle</resource-bundle>
@@ -15,7 +15,8 @@
   <depends>org.jetbrains.plugins.textmate</depends>
 
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
-    <server id="restudio.vtsls" name="vtsls (ReStudio)" factoryClass="dev.restudio.web.lsp.VtslsServerFactory"/>
+    <!-- In a TypeScript 7 project without Vue, this server runs the LSP mode of the project tsc (see TypeScriptServer). -->
+    <server id="restudio.vtsls" name="TypeScript LS (ReStudio)" factoryClass="dev.restudio.web.lsp.VtslsServerFactory"/>
     <fileNamePatternMapping patterns="*.ts;*.mts;*.cts" serverId="restudio.vtsls" languageId="typescript"/>
     <fileNamePatternMapping patterns="*.tsx" serverId="restudio.vtsls" languageId="typescriptreact"/>
     <fileNamePatternMapping patterns="*.js;*.mjs;*.cjs" serverId="restudio.vtsls" languageId="javascript"/>
@@ -36,6 +37,27 @@
     <!-- The platform maps *.css to its built-in "CSS" custom file type, whose language is TEXT. -->
     <languageMapping language="TEXT" serverId="restudio.tailwind" languageId="css"
                      documentMatcher="dev.restudio.web.lsp.TailwindFileMatcher"/>
+    <!-- *.tsx, *.jsx and *.vue go to TextMate. Tailwind LS reads the class names from their language IDs. -->
+    <languageMapping language="textmate" serverId="restudio.tailwind" languageId="typescriptreact"
+                     documentMatcher="dev.restudio.web.lsp.TailwindTypeScriptReactMatcher"/>
+    <languageMapping language="textmate" serverId="restudio.tailwind" languageId="javascriptreact"
+                     documentMatcher="dev.restudio.web.lsp.TailwindJavaScriptReactMatcher"/>
+    <languageMapping language="textmate" serverId="restudio.tailwind" languageId="vue"
+                     documentMatcher="dev.restudio.web.lsp.TailwindVueMatcher"/>
+
+    <!-- The HTML, CSS and JSON servers of vscode-langservers-extracted. -->
+    <server id="restudio.html" name="HTML LS (ReStudio)" factoryClass="dev.restudio.web.lsp.HtmlServerFactory"/>
+    <languageMapping language="HTML" serverId="restudio.html" languageId="html"/>
+    <server id="restudio.css" name="CSS LS (ReStudio)" factoryClass="dev.restudio.web.lsp.CssServerFactory"/>
+    <fileNamePatternMapping patterns="*.css" serverId="restudio.css" languageId="css"/>
+    <fileNamePatternMapping patterns="*.scss" serverId="restudio.css" languageId="scss"/>
+    <fileNamePatternMapping patterns="*.less" serverId="restudio.css" languageId="less"/>
+    <!-- A JSON file with comments, such as tsconfig.json, needs the language ID jsonc. -->
+    <server id="restudio.json" name="JSON LS (ReStudio)" factoryClass="dev.restudio.web.lsp.JsonServerFactory"/>
+    <languageMapping language="JSON" serverId="restudio.json" languageId="json"
+                     documentMatcher="dev.restudio.web.lsp.JsonFileMatcher"/>
+    <languageMapping language="JSON" serverId="restudio.json" languageId="jsonc"
+                     documentMatcher="dev.restudio.web.lsp.JsonWithCommentsFileMatcher"/>
 
     <!-- ESLint starts only in a project with ESLint installed. ESLint LS needs the right language ID for each file. -->
     <server id="restudio.eslint" name="ESLint (ReStudio)" factoryClass="dev.restudio.web.lsp.EslintServerFactory"/>
@@ -59,6 +81,8 @@
     <codeInsight.lineMarkerProvider language="JSON" implementationClass="dev.restudio.web.run.NpmScriptLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="textmate" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
     <codeInsight.lineMarkerProvider language="TEXT" implementationClass="dev.restudio.web.run.VitestLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="textmate" implementationClass="dev.restudio.web.run.JestLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="TEXT" implementationClass="dev.restudio.web.run.JestLineMarkerProvider"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.web.ide.WebAdvertiserSuppressor"/>
     <textmate.bundleProvider implementation="dev.restudio.web.ide.VueBundleProvider"/>
     <!-- Prettier comes before the language server formatting, but only in a project with Prettier installed. -->
@@ -68,5 +92,9 @@
     <configurationType implementation="dev.restudio.web.test.VitestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.web.run.NpmScriptRunConfigurationProducer"/>
     <runConfigurationProducer implementation="dev.restudio.web.test.VitestRunConfigurationProducer"/>
+    <configurationType implementation="dev.restudio.web.test.JestConfigurationType"/>
+    <runConfigurationProducer implementation="dev.restudio.web.test.JestRunConfigurationProducer"/>
+    <configurationType implementation="dev.restudio.web.run.ChromeDebugConfigurationType"/>
+    <newProjectWizard.generator implementation="dev.restudio.web.wizard.WebNewProjectWizard"/>
   </extensions>
 </idea-plugin>

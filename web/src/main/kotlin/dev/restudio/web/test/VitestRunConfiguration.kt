@@ -92,9 +92,10 @@ class VitestRunState(environment: ExecutionEnvironment, private val configuratio
     val script = configuration.vitestScript()
     if (!Files.isRegularFile(script)) throw ExecutionException(WebBundle.message("vitest.not.installed", configuration.workingDirectory.orEmpty()))
     val arguments = configuration.vitestArguments() + listOf("--reporter=${reporter()}", "--includeTaskLocation")
+    val root = Path.of(configuration.workingDirectory)
     return GeneralCommandLine(listOf(node.toString(), script.toString()) + arguments)
-      .withWorkingDirectory(Path.of(configuration.workingDirectory))
-      .withEnvironment(NodeSdk.environment())
+      .withWorkingDirectory(root)
+      .withEnvironment(NodeSdk.environment(root))
       .withCharset(StandardCharsets.UTF_8)
   }
 
@@ -171,7 +172,7 @@ class VitestRunConfigurationProducer : LazyRunConfigurationProducer<VitestRunCon
   }
 
   private fun testFor(context: ConfigurationContext): Triple<String, String, String>? {
-    val (file, entryPoint) = ContextEntryPoints.find(context, VitestEntryPointDetector) { VitestEntryPointDetector.isTestFile(it.name) } ?: return null
+    val (file, entryPoint) = ContextEntryPoints.find(context, VitestEntryPointDetector) { VitestEntryPointDetector.isTestFile(it.name) && !JsTestFrameworks.isJest(it) } ?: return null
     if (entryPoint.kind != EntryPoint.Kind.TEST) return null
     val root = NodeSdk.packageRoot(file) ?: return null
     return Triple(file.path, entryPoint.name, root.path)

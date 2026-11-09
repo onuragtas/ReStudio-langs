@@ -4,6 +4,7 @@ import dev.restudio.core.dap.DapLaunch
 import dev.restudio.core.dap.jsonObject
 import dev.restudio.web.debug.JsDebugDescriptorFactory
 import dev.restudio.web.sdk.NodeSdk
+import java.nio.file.Path
 
 /**
  * Builds the vscode-js-debug launches.
@@ -27,6 +28,27 @@ object JsDebugLaunches {
       workingDirectory = workingDirectory,
       file = file,
       launch = jsonObject(*entries.toList().toTypedArray()),
+      environment = NodeSdk.environment(Path.of(workingDirectory)),
+      serverId = JsDebugDescriptorFactory.SERVER_ID,
+    )
+  }
+
+  /**
+   * Debugs a `pwa-chrome` launch: js-debug starts Chrome with a new profile and opens [url]. [webRoot] maps the
+   * script URLs to the source files. The DAP probe recorded the launch with a `file://` page: one child session,
+   * a verified breakpoint, the variables, evaluate and step over work.
+   */
+  fun chrome(name: String, url: String, webRoot: String): DapLaunch? {
+    val server = NodeSdk.jsDebugServer() ?: return null
+    val node = NodeSdk.node() ?: return null
+    val entries = listOf("type" to "pwa-chrome", "name" to name, "request" to "launch", "url" to url, "webRoot" to webRoot)
+    return DapLaunch(
+      adapterName = ADAPTER_NAME,
+      command = "$node $server \${port} 127.0.0.1",
+      readyPattern = READY_PATTERN,
+      workingDirectory = webRoot,
+      file = webRoot,
+      launch = jsonObject(*entries.toTypedArray()),
       environment = NodeSdk.environment(),
       serverId = JsDebugDescriptorFactory.SERVER_ID,
     )

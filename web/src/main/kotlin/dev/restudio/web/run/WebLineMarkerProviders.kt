@@ -4,6 +4,8 @@ import com.intellij.psi.PsiFile
 import dev.restudio.core.entrypoints.EntryPointDetector
 import dev.restudio.core.entrypoints.EntryPointLineMarkerProvider
 import dev.restudio.web.WebBundle
+import dev.restudio.web.test.JestEntryPointDetector
+import dev.restudio.web.test.JsTestFrameworks
 import dev.restudio.web.test.VitestEntryPointDetector
 
 /** Puts the run and debug gutter icon on each script of a `package.json` file outside `node_modules`. */
@@ -19,7 +21,18 @@ class NpmScriptLineMarkerProvider : EntryPointLineMarkerProvider() {
 class VitestLineMarkerProvider : EntryPointLineMarkerProvider() {
   override val detector: EntryPointDetector = VitestEntryPointDetector
 
-  override fun accepts(file: PsiFile): Boolean = VitestEntryPointDetector.isTestFile(file.name) && file.virtualFile?.path?.contains("/node_modules/") != true
+  override fun accepts(file: PsiFile): Boolean =
+    VitestEntryPointDetector.isTestFile(file.name) && file.virtualFile?.let { "/node_modules/" !in it.path && !JsTestFrameworks.isJest(it) } != false
 
   override fun getName(): String = WebBundle.message("gutter.vitest.name")
+}
+
+/** Puts the run and debug gutter icon on the `describe`, `it` and `test` calls of a test file in a Jest project. */
+class JestLineMarkerProvider : EntryPointLineMarkerProvider() {
+  override val detector: EntryPointDetector = JestEntryPointDetector
+
+  override fun accepts(file: PsiFile): Boolean =
+    JestEntryPointDetector.isTestFile(file.name) && file.virtualFile?.let { "/node_modules/" !in it.path && JsTestFrameworks.isJest(it) } == true
+
+  override fun getName(): String = WebBundle.message("gutter.jest.name")
 }
