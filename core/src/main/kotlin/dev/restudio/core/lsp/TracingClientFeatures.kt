@@ -19,13 +19,19 @@ open class TracingClientFeatures : LSPClientFeatures() {
   override fun <S : LanguageServer> createLauncherBuilder(): Launcher.Builder<S> {
     val builder = super.createLauncherBuilder<S>()
     if (!LOG.isDebugEnabled) return builder
-    val file = Path.of(PathManager.getLogPath(), "restudio-lsp", "${serverDefinition.id}.log")
+    val file = traceFile(serverDefinition.id)
     Files.createDirectories(file.parent)
     LOG.debug("Tracing ${serverDefinition.id} to $file")
     return builder.traceMessages(PrintWriter(Files.newBufferedWriter(file), true))
   }
 
-  private companion object {
-    val LOG = logger<TracingClientFeatures>()
+  companion object {
+    private val LOG = logger<TracingClientFeatures>()
+
+    /** The directory of the trace files. */
+    fun traceDirectory(): Path = Path.of(PathManager.getLogPath(), "restudio-lsp")
+
+    /** The trace file of the language server [serverId]. */
+    fun traceFile(serverId: String): Path = traceDirectory().resolve("$serverId.log")
   }
 }
