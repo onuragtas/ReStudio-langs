@@ -4,33 +4,39 @@ import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.actions.LazyRunConfigurationProducer
 import com.intellij.execution.configurations.ConfigurationFactory
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
-import com.redhat.devtools.lsp4ij.dap.configurations.DAPRunConfiguration
-import dev.restudio.core.dap.DapLaunch
 import dev.restudio.core.entrypoints.ContextEntryPoints
 import dev.restudio.core.entrypoints.EntryPoint
+import dev.restudio.go.GoBundle
 
-/** Creates a Delve run configuration for `func main()`. [dev.restudio.go.test.GoTestRunConfigurationProducer] does the tests. */
-class GoRunConfigurationProducer : LazyRunConfigurationProducer<DAPRunConfiguration>() {
-  override fun getConfigurationFactory(): ConfigurationFactory = DapLaunch.configurationFactory()
+/**
+ * Creates a [GoApplicationRunConfiguration] for `func main()`. Run starts `go build` and the program, Debug starts Delve.
+ * [dev.restudio.go.test.GoTestRunConfigurationProducer] does the tests.
+ */
+class GoRunConfigurationProducer : LazyRunConfigurationProducer<GoApplicationRunConfiguration>() {
+  override fun getConfigurationFactory(): ConfigurationFactory = GoApplicationConfigurationType.getInstance().configurationFactories.single()
 
   override fun setupConfigurationFromContext(
-    configuration: DAPRunConfiguration,
+    configuration: GoApplicationRunConfiguration,
     context: ConfigurationContext,
     sourceElement: Ref<PsiElement>,
   ): Boolean {
-    val (name, launch) = launchFor(context) ?: return false
-    launch.applyTo(configuration)
-    configuration.name = name
+    val file = mainFile(context) ?: return false
+    val packageDirectory = file.parent
+    configuration.packageDirectory = packageDirectory.path
+    configuration.workingDirectory = (GoLaunches.moduleRoot(file) ?: packageDirectory).path
+    configuration.file = file.path
+    configuration.updateLaunch()
+    configuration.name = GoBundle.message("run.configuration.main", packageDirectory.name)
     return true
   }
 
-  override fun isConfigurationFromContext(configuration: DAPRunConfiguration, context: ConfigurationContext): Boolean =
-    launchFor(context)?.second?.matches(configuration) == true
+  override fun isConfigurationFromContext(configuration: GoApplicationRunConfiguration, context: ConfigurationContext): Boolean =
+    mainFile(context)?.parent?.path == configuration.packageDirectory
 
-  private fun launchFor(context: ConfigurationContext): Pair<String, DapLaunch>? {
+  private fun mainFile(context: ConfigurationContext): VirtualFile? {
     val (file, entryPoint) = ContextEntryPoints.find(context, GoEntryPointDetector) { it.extension == "go" } ?: return null
-    if (entryPoint.kind != EntryPoint.Kind.MAIN) return null
-    return GoLaunches.create(file, entryPoint)
+    return if (entryPoint.kind == EntryPoint.Kind.MAIN) file else null
   }
 }

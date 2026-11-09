@@ -22,23 +22,13 @@ object GoLaunches {
     val dlv = ToolLocator.find("dlv")?.toString() ?: "dlv"
     val environment = mapOf("PATH" to ToolLocator.childPath())
     return when (entryPoint.kind) {
-      EntryPoint.Kind.MAIN -> GoBundle.message("run.configuration.main", file.parent.name) to DapLaunch(
-        adapterName = DELVE,
-        command = "$dlv dap",
-        readyPattern = DELVE_READY_PATTERN,
-        workingDirectory = moduleRoot,
+      EntryPoint.Kind.MAIN -> GoBundle.message("run.configuration.main", file.parent.name) to application(
+        name = file.parent.name,
         file = file.path,
-        launch = jsonObject(
-          "type" to "go",
-          "name" to file.parent.name,
-          "request" to "launch",
-          "mode" to "debug",
-          "program" to packageDir,
-          "cwd" to moduleRoot,
-          "dlvCwd" to packageDir,
-        ),
-        environment = environment,
-        serverId = DelveDescriptorFactory.SERVER_ID,
+        packageDirectory = packageDir,
+        workingDirectory = moduleRoot,
+        arguments = emptyList(),
+        environment = emptyMap(),
       )
       EntryPoint.Kind.TEST -> GoBundle.message("run.configuration.test", entryPoint.name) to DapLaunch(
         adapterName = DELVE,
@@ -62,11 +52,50 @@ object GoLaunches {
     }
   }
 
+  /**
+   * Returns the Delve launch for the `main` package in [packageDirectory].
+   * The program runs in [workingDirectory] with [arguments] and the [environment] of the user.
+   */
+  fun application(
+    name: String,
+    file: String,
+    packageDirectory: String,
+    workingDirectory: String,
+    arguments: List<String>,
+    environment: Map<String, String>,
+  ): DapLaunch {
+    val dlv = ToolLocator.find("dlv")?.toString() ?: "dlv"
+    val launch = mutableListOf<Pair<String, Any>>(
+      "type" to "go",
+      "name" to name,
+      "request" to "launch",
+      "mode" to "debug",
+      "program" to packageDirectory,
+      "cwd" to workingDirectory,
+      "dlvCwd" to packageDirectory,
+    )
+    if (arguments.isNotEmpty()) launch += "args" to arguments
+    return DapLaunch(
+      adapterName = DELVE,
+      command = "$dlv dap",
+      readyPattern = DELVE_READY_PATTERN,
+      workingDirectory = workingDirectory,
+      file = file,
+      launch = jsonObject(*launch.toTypedArray()),
+      environment = childEnvironment(environment),
+      serverId = DelveDescriptorFactory.SERVER_ID,
+    )
+  }
+
+  /** Returns [environment] with the PATH that finds `go`, unless the user sets PATH. */
+  fun childEnvironment(environment: Map<String, String>): Map<String, String> =
+    if ("PATH" in environment) environment else environment + ("PATH" to ToolLocator.childPath())
+
   /** Returns the `-run` pattern that matches only [entryPoint]. */
   fun testPattern(entryPoint: EntryPoint): String = "^${entryPoint.name}$"
 
   /** Returns the nearest parent directory with a `go.mod` file. */
-  private fun moduleRoot(file: VirtualFile): VirtualFile? =
+  fun moduleRoot(file: VirtualFile): VirtualFile? =
     generateSequence(file.parent) { it.parent }.firstOrNull { it.findChild("go.mod") != null }
 
   private const val DELVE = "Go - Delve"

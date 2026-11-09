@@ -27,9 +27,24 @@
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.lineMarkerProvider language="textmate"
                                     implementationClass="dev.restudio.go.run.GoLineMarkerProvider"/>
+    <configurationType implementation="dev.restudio.go.run.GoApplicationConfigurationType"/>
     <configurationType implementation="dev.restudio.go.test.GoTestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.go.run.GoRunConfigurationProducer"/>
     <runConfigurationProducer implementation="dev.restudio.go.test.GoTestRunConfigurationProducer"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.go.ide.GoAdvertiserSuppressor"/>
+    <postStartupActivity implementation="dev.restudio.go.project.GoModuleRootsActivity"/>
+    <lang.importOptimizer language="textmate" implementationClass="dev.restudio.go.format.GoImportOptimizer"/>
+    <actionOnSave implementation="dev.restudio.go.format.GoOrganizeImportsOnSave"/>
+    <projectConfigurable parentId="language"
+                         id="restudio.go.settings"
+                         instance="dev.restudio.go.settings.GoSettingsConfigurable"
+                         key="settings.name"
+                         bundle="messages.GoBundle"/>
+    <newProjectWizard.generator implementation="dev.restudio.go.wizard.GoNewProjectWizard"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="dev.restudio.go.project.GoModuleFilesListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
 </idea-plugin>
