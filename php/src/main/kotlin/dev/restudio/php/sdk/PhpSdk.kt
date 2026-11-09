@@ -5,7 +5,7 @@ import dev.restudio.core.sdk.ToolLocator
 import java.nio.file.Files
 import java.nio.file.Path
 
-/** Finds PHP and the PHP tools: Phpactor, the php-debug adapter and Node.js for it. */
+/** Finds PHP and the PHP tools: the language servers, the php-debug adapter, Node.js for it and the Composer tools. */
 object PhpSdk {
   private val tools: Path = Path.of(System.getProperty("user.home"), ".restudio-dev/tools")
 
@@ -20,6 +20,15 @@ object PhpSdk {
     val php = php() ?: return null
     return listOf(php.toString(), phar.toString())
   }
+
+  /** `intelephense` on the PATH. Install it with `npm install -g intelephense`. */
+  fun intelephense(): Path? = ToolLocator.find("intelephense")
+
+  /** `composer` on the PATH. */
+  fun composer(): Path? = ToolLocator.find("composer")
+
+  /** The script `vendor/bin/<name>` of the Composer project in [root], or `null` when the package is not installed. */
+  fun vendorBinary(root: VirtualFile, name: String): VirtualFile? = root.findFileByRelativePath("vendor/bin/$name")?.takeIf { !it.isDirectory }
 
   /** The vscode-php-debug adapter script in the newest `~/.restudio-dev/tools/php-debug/<version>`. */
   fun phpDebugAdapter(): Path? = newest("php-debug", "vsix/extension/out/phpDebug.js")

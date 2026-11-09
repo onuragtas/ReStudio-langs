@@ -2,12 +2,14 @@ package dev.restudio.php.run
 
 import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.entrypoints.EntryPointDetector
+import dev.restudio.php.test.PestEntryPointDetector
 
 /**
  * Finds the entry points of a PHP file without a parser.
  *
  * - In a `*Test.php` file, a method named `test*`, or a method with `#[Test]` or `@test`, is a [EntryPoint.Kind.TEST].
  *   Its name is `Namespace\Class::method`, the name that PHPUnit prints.
+ * - A `*Test.php` file without a class, but with Pest calls, is a Pest file. [PestEntryPointDetector] finds its tests.
  * - A script is a file without a namespace and without a class, interface, trait or enum. Its `<?php` tag is a
  *   [EntryPoint.Kind.MAIN].
  */
@@ -22,6 +24,7 @@ object PhpEntryPointDetector : EntryPointDetector {
     if (!fileName.endsWith(".php")) return emptyList()
     val classes = CLASS_LIKE.findAll(text).toList()
     if (classes.isEmpty()) {
+      if (fileName.endsWith("Test.php")) PestEntryPointDetector.detect(text).takeIf { it.isNotEmpty() }?.let { return it }
       if (NAMESPACE.containsMatchIn(text)) return emptyList()
       return OPEN_TAG.find(text)?.let { listOf(EntryPoint(EntryPoint.Kind.MAIN, fileName.removeSuffix(".php"), it.range.first)) }.orEmpty()
     }

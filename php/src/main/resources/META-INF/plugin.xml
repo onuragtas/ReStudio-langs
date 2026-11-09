@@ -3,8 +3,9 @@
   <name>ReStudio PHP</name>
   <vendor>ReStudio</vendor>
   <description><![CDATA[
-    PHP support through Phpactor, Xdebug and PHPUnit: code insight, run and debug gutter icons for scripts and tests,
-    and the PHPUnit test tree.
+    PHP support through Phpactor or Intelephense, Xdebug, PHPUnit and Pest: code insight, Composer source roots,
+    run and debug gutter icons for scripts and tests, the built-in web server and artisan configurations,
+    the PHPUnit and Pest test tree, PHP CS Fixer and Pint formatting, and a PHP project wizard.
   ]]></description>
 
   <resource-bundle>messages.PhpBundle</resource-bundle>
@@ -15,11 +16,12 @@
   <depends>org.jetbrains.plugins.textmate</depends>
 
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
-    <server id="restudio.phpactor"
-            name="Phpactor (ReStudio)"
-            factoryClass="dev.restudio.php.lsp.PhpactorServerFactory"/>
+    <!-- The factory starts Phpactor or Intelephense, as the PHP settings select. -->
+    <server id="restudio.php"
+            name="PHP (ReStudio)"
+            factoryClass="dev.restudio.php.lsp.PhpServerFactory"/>
     <fileNamePatternMapping patterns="*.php"
-                            serverId="restudio.phpactor"
+                            serverId="restudio.php"
                             languageId="php"/>
     <debugAdapterServer id="restudio.php-debug"
                         name="php-debug (ReStudio)"
@@ -30,9 +32,33 @@
     <codeInsight.lineMarkerProvider language="textmate"
                                     implementationClass="dev.restudio.php.run.PhpLineMarkerProvider"/>
     <pluginAdvertiserSuppressor implementation="dev.restudio.php.ide.PhpAdvertiserSuppressor"/>
+    <!-- PHP CS Fixer or Pint comes before the language server formatting, but only when the project has one. -->
+    <formattingService order="first" implementation="dev.restudio.php.ide.PhpFormattingService"/>
+    <notificationGroup id="ReStudio PHP" displayType="BALLOON" key="notification.group.name"/>
+    <applicationConfigurable parentId="language"
+                             id="dev.restudio.php"
+                             instance="dev.restudio.php.settings.PhpConfigurable"
+                             key="settings.display.name"/>
+    <newProjectWizard.generator implementation="dev.restudio.php.wizard.PhpNewProjectWizard"/>
+
+    <postStartupActivity implementation="dev.restudio.php.project.ComposerRootsActivity"/>
+    <postStartupActivity implementation="dev.restudio.php.run.ArtisanDetectionActivity"/>
+    <additionalLibraryRootsProvider implementation="dev.restudio.php.project.ComposerVendorLibraryProvider"/>
+
     <configurationType implementation="dev.restudio.php.run.PhpScriptConfigurationType"/>
+    <configurationType implementation="dev.restudio.php.run.PhpServerConfigurationType"/>
+    <configurationType implementation="dev.restudio.php.run.ArtisanConfigurationType"/>
     <configurationType implementation="dev.restudio.php.test.PhpUnitConfigurationType"/>
+    <configurationType implementation="dev.restudio.php.test.PestConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.php.run.PhpScriptRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.php.run.PhpServerRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.php.run.ArtisanRunConfigurationProducer"/>
     <runConfigurationProducer implementation="dev.restudio.php.test.PhpUnitRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="dev.restudio.php.test.PestRunConfigurationProducer"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="dev.restudio.php.project.ComposerJsonListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
 </idea-plugin>

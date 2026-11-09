@@ -151,7 +151,8 @@ class PhpUnitRunConfigurationProducer : LazyRunConfigurationProducer<PhpUnitRunC
 
   private fun testFor(context: ConfigurationContext): Triple<String, String, String>? {
     val (file, entryPoint) = ContextEntryPoints.find(context, PhpEntryPointDetector) { it.extension == "php" } ?: return null
-    if (entryPoint.kind != EntryPoint.Kind.TEST) return null
+    // A Pest test name has no `::`. PestRunConfigurationProducer takes it.
+    if (entryPoint.kind != EntryPoint.Kind.TEST || "::" !in entryPoint.name) return null
     val root = PhpSdk.composerRoot(file) ?: return null
     return Triple(file.path, entryPoint.name.substringAfter("::"), root.path)
   }
