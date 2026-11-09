@@ -10,7 +10,7 @@
   <depends>com.intellij.modules.platform</depends>
   <depends>com.redhat.devtools.lsp4ij</depends>
 
-  <resource-bundle>messages.CoreBundle</resource-bundle>
+  <resource-bundle>messages.ReStudioCoreBundle</resource-bundle>
 
   <extensionPoints>
     <extensionPoint qualifiedName="dev.restudio.core.toolProvider" interface="dev.restudio.core.sdk.ToolProvider" dynamic="true"/>
