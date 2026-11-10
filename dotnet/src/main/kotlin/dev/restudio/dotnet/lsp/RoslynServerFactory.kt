@@ -5,8 +5,10 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.LanguageClientImpl
+import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
+import dev.restudio.core.lsp.TracingClientFeatures
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.dotnet.sdk.DotnetSdk
 import dev.restudio.dotnet.settings.CSharpServer
@@ -41,6 +43,8 @@ class RoslynServerFactory : LanguageServerFactory {
     if (selectedServer() == CSharpServer.CSHARP_LS) LanguageClientImpl(project) else RoslynLanguageClient(project)
 
   override fun getServerInterface(): Class<out LanguageServer> = RoslynLanguageServer::class.java
+
+  override fun createClientFeatures(): LSPClientFeatures = TracingClientFeatures()
 
   private fun csharpLsCommandLine(project: Project): GeneralCommandLine {
     val server = ToolLocator.find(CSHARP_LS) ?: Path.of(CSHARP_LS)

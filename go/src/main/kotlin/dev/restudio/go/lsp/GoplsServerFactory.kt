@@ -3,6 +3,7 @@ package dev.restudio.go.lsp
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.openapi.project.Project
 import com.redhat.devtools.lsp4ij.LanguageServerFactory
+import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import dev.restudio.core.sdk.ToolLocator
@@ -16,4 +17,6 @@ class GoplsServerFactory : LanguageServerFactory {
     project.basePath?.let { commandLine.withWorkingDirectory(java.nio.file.Path.of(it)) }
     return OSProcessStreamConnectionProvider(commandLine)
   }
+
+  override fun createClientFeatures(): LSPClientFeatures = GoplsClientFeatures()
 }
