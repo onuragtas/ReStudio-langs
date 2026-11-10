@@ -14,7 +14,7 @@ import dev.restudio.core.sdk.install.ToolInstaller
 import javax.swing.JButton
 
 /**
- * The settings page Languages & Frameworks > ReStudio Tools.
+ * The settings page Tools > ReStudio Tools.
  *
  * For each registered [Tool] it shows the path that [ToolLocator] finds, and a field for the user override.
  * It finds the paths in a background thread, because the search reads the file system.

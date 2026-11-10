@@ -39,7 +39,8 @@ class LanguageServerStatusWidgetFactory : StatusBarWidgetFactory {
  *
  * The click opens a popup: open the trace of a server, or restart a server.
  * LSP4IJ gives no public status listener, so the widget reads [LanguageServerManager.getServerStatus] each two seconds
- * in a background coroutine. A server with the status [ServerStatus.none] did not start in this project. The widget hides it.
+ * in a background coroutine. A server with the status [ServerStatus.none] did not start in this project. The widget does not count it.
+ * With no started server, the widget shows `LSP 0/0`, so that the user can find it.
  */
 class LanguageServerStatusWidget(private val project: Project, private val scope: CoroutineScope) :
   StatusBarWidget, StatusBarWidget.MultipleTextValuesPresentation {
@@ -67,13 +68,12 @@ class LanguageServerStatusWidget(private val project: Project, private val scope
 
   override fun getSelectedValue(): String? {
     val current = servers
-    if (current.isEmpty()) return null
     return CoreBundle.message("lsp.widget.text", current.count { it.status == ServerStatus.started }, current.size)
   }
 
   override fun getTooltipText(): String? {
     val current = servers
-    if (current.isEmpty()) return null
+    if (current.isEmpty()) return CoreBundle.message("lsp.widget.empty")
     val builder = HtmlBuilder().append(CoreBundle.message("lsp.widget.name"))
     for (server in current) builder.br().append(HtmlChunk.text(CoreBundle.message("lsp.widget.server", server.name, statusText(server.status))))
     return builder.wrapWithHtmlBody().toString()
