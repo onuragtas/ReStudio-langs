@@ -1,0 +1,45 @@
+# Builds the plugin zips and publishes them as a GitHub release.
+# The ReStudio build downloads the zips from this release (fork/bundled-plugins.tsv in onuragtas/ReStudio).
+#
+# Start it with a tag push, for example v0.1.0. The tag gives the plugin version.
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Java
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '25'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v5
+
+      - name: Build the plugins
+        shell: bash
+        run: ./gradlew buildPlugin -Prestudio.version="${GITHUB_REF_NAME#v}"
+
+      - name: Publish the release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ls -l */build/distributions/*.zip
+          for zip in */build/distributions/*.zip; do
+            shasum --algorithm 256 "$zip"
+          done
+          gh release create "$GITHUB_REF_NAME" */build/distributions/*.zip \
+            --repo "$GITHUB_REPOSITORY" --title "ReStudio language plugins ${GITHUB_REF_NAME}" \
+            --notes "The language plugins of ReStudio: core, Go, .NET, web and PHP. The ReStudio installers contain them."
