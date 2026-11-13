@@ -1,0 +1,18 @@
+{
+  "groups": [
+    { "name": "server", "type": "org.example.lib.ServerProperties", "sourceType": "org.example.lib.ServerProperties" }
+  ],
+  "properties": [
+    { "name": "server.port", "type": "java.lang.Integer", "description": "Server HTTP port.", "sourceType": "org.example.lib.ServerProperties", "defaultValue": 8080 },
+    { "name": "server.servlet.context-path", "type": "java.lang.String", "description": "Context path of the application." },
+    { "name": "spring.jpa.show-sql", "type": "java.lang.Boolean", "description": "Whether to enable logging of SQL statements.", "defaultValue": false },
+    { "name": "spring.jpa.properties", "type": "java.util.Map<java.lang.String,java.lang.String>", "description": "Additional native properties." },
+    { "name": "spring.jpa.hibernate.ddl-auto", "type": "java.lang.String", "description": "DDL mode." },
+    { "name": "spring.profiles.active", "type": "java.util.List<java.lang.String>", "description": "Active profiles." },
+    { "name": "logging.level", "type": "java.util.Map<java.lang.String,java.lang.String>", "description": "Log levels." },
+    { "name": "server.old-name", "type": "java.lang.String", "deprecation": { "replacement": "server.port" } }
+  ],
+  "hints": [
+    { "name": "spring.jpa.hibernate.ddl-auto", "values": [ { "value": "none" }, { "value": "validate" }, { "value": "update" } ] }
+  ]
+}

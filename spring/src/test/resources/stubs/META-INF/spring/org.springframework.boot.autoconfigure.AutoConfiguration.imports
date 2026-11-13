@@ -1,0 +1,3 @@
+# Test auto-configurations
+org.example.lib.autoconfigure.ClockAutoConfiguration
+org.example.lib.autoconfigure.TracerAutoConfiguration
