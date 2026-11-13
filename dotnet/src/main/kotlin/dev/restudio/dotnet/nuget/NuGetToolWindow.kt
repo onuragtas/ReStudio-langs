@@ -12,6 +12,8 @@ import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
+import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.openapi.util.Key
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -49,8 +51,23 @@ class NuGetToolWindowFactory : ToolWindowFactory, DumbAware {
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     val panel = NuGetPanel(project)
-    toolWindow.contentManager.addContent(ContentFactory.getInstance().createContent(panel.component, null, false))
+    val content = ContentFactory.getInstance().createContent(panel.component, null, false)
+    content.putUserData(PANEL, panel)
+    toolWindow.contentManager.addContent(content)
     panel.reloadProjects()
+  }
+
+  companion object {
+    private const val ID = "NuGet"
+    private val PANEL = Key.create<NuGetPanel>("restudio.nuget.panel")
+
+    /** Opens the NuGet tool window with [file] as the selected project, and puts the focus in the search field. */
+    fun show(project: Project, file: Path) {
+      val window = ToolWindowManager.getInstance(project).getToolWindow(ID) ?: return
+      window.activate {
+        window.contentManager.contents.firstNotNullOfOrNull { it.getUserData(PANEL) }?.select(file)
+      }
+    }
   }
 }
 
@@ -96,6 +113,7 @@ private class NuGetPanel(private val project: Project) {
   private val versionModel = CollectionComboBoxModel<String>()
   private val versionBox = ComboBox(versionModel)
   private val searchGeneration = AtomicInteger()
+  private var requestedProject: Path? = null
 
   val component: JComponent = JBSplitter(false, SPLIT).apply {
     firstComponent = panel {
@@ -129,10 +147,25 @@ private class NuGetPanel(private val project: Project) {
       ui {
         val selected = projectModel.selected
         projectModel.replaceAll(files)
-        projectModel.selectedItem = selected?.takeIf { it in files } ?: files.firstOrNull()
+        val requested = requestedProject?.takeIf { it in files }
+        requestedProject = null
+        projectModel.selectedItem = requested ?: selected?.takeIf { it in files } ?: files.firstOrNull()
         reloadInstalled()
       }
     }
+  }
+
+  /** Selects the project [file]. When the list does not have it yet, the next reload selects it. */
+  fun select(file: Path) {
+    if (projectModel.items.contains(file)) {
+      projectModel.selectedItem = file
+      reloadInstalled()
+    }
+    else {
+      requestedProject = file
+      reloadProjects()
+    }
+    searchField.requestFocusInWindow()
   }
 
   private fun reloadInstalled() {

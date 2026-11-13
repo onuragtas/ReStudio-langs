@@ -19,7 +19,18 @@ data class MsbuildProject(
   val isTestProject: Boolean,
   val projectReferences: List<Path>,
   val packageReferences: List<PackageReference>,
+  val frameworkReferences: List<String> = emptyList(),
+  val items: List<MsbuildItem> = emptyList(),
 )
+
+/**
+ * A file or folder item of a project, for example a `Compile` or a `None` item.
+ *
+ * [path] is the full path. [link] is the path in the project view when the item has `Link` metadata.
+ * [dependentUpon] is the value of the `DependentUpon` metadata, as the project file gives it.
+ * [visible] is `false` when the item has `Visible="false"`, for example a file that a NuGet package adds.
+ */
+data class MsbuildItem(val type: String, val path: Path, val dependentUpon: String? = null, val link: String? = null, val visible: Boolean = true)
 
 /** A `PackageReference` item. [version] is `null` when central package management sets it. */
 data class PackageReference(val id: String, val version: String?)
@@ -33,7 +44,13 @@ data class PackageReference(val id: String, val version: String?)
  */
 object DotnetMsbuild {
   private val PROPERTIES = listOf("TargetFramework", "TargetFrameworks", "TargetPath", "AssemblyName", "OutputType", "IsTestProject")
-  private val ITEMS = listOf("ProjectReference", "PackageReference")
+  private val ITEMS = listOf("ProjectReference", "PackageReference", "FrameworkReference")
+
+  /** The item types that the Solution view shows as files. MSBuild returns nothing for a type that a project does not use. */
+  val FILE_ITEMS: List<String> = listOf(
+    "Compile", "Content", "None", "EmbeddedResource", "Folder", "Page", "Resource", "ApplicationDefinition",
+    "AdditionalFiles", "AvaloniaXaml", "TypeScriptCompile", "Protobuf",
+  )
   private const val TIMEOUT_MS = 60 * 1000
 
   private class Entry(val stamp: Long, val project: MsbuildProject)
@@ -67,7 +84,7 @@ object DotnetMsbuild {
   fun evaluate(file: Path): MsbuildProject? {
     val stamp = stamp(file)
     cache[file]?.takeIf { it.stamp == stamp }?.let { return it.project }
-    val arguments = listOf("msbuild", file.toString(), "-nologo") + PROPERTIES.map { "-getProperty:$it" } + ITEMS.map { "-getItem:$it" }
+    val arguments = listOf("msbuild", file.toString(), "-nologo") + PROPERTIES.map { "-getProperty:$it" } + (ITEMS + FILE_ITEMS).map { "-getItem:$it" }
     val output = DotnetCli.run(file.parent, arguments, TIMEOUT_MS) ?: return null
     if (output.isTimeout || output.exitCode != 0) {
       LOG.info("dotnet msbuild failed for $file: ${output.stderr.ifEmpty { output.stdout }.take(1000)}")
@@ -100,6 +117,16 @@ object DotnetMsbuild {
       isTestProject = property("IsTestProject").equals("true", ignoreCase = true),
       projectReferences = items("ProjectReference").mapNotNull { item -> item.text("FullPath")?.let { Path.of(it).normalize() } },
       packageReferences = items("PackageReference").mapNotNull { item -> item.text("Identity")?.let { PackageReference(it, item.text("Version")) } },
+      frameworkReferences = items("FrameworkReference").mapNotNull { it.text("Identity") },
+      items = FILE_ITEMS.flatMap { type ->
+        items(type).mapNotNull { item ->
+          val path = item.text("FullPath") ?: return@mapNotNull null
+          MsbuildItem(
+            type, Path.of(path).normalize(), item.text("DependentUpon"), item.text("Link")?.replace('\\', '/'),
+            visible = !item.text("Visible").equals("false", ignoreCase = true),
+          )
+        }
+      },
     )
   }
 

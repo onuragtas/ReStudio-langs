@@ -54,7 +54,13 @@
                 icon="AllIcons.Nodes.PpLib"
                 factoryClass="dev.restudio.dotnet.nuget.NuGetToolWindowFactory"/>
     <newProjectWizard.generator implementation="dev.restudio.dotnet.wizard.DotnetNewProjectWizard"/>
+    <projectViewPane implementation="dev.restudio.dotnet.solution.SolutionViewPane"/>
   </extensions>
+
+  <projectListeners>
+    <listener class="dev.restudio.dotnet.solution.CsprojFileListener"
+              topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+  </projectListeners>
 
   <actions>
     <!-- The IDs are the Roslyn LS code lens commands. LSP4IJ runs the action with the same ID. -->
@@ -64,6 +70,18 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
       <action id="ReStudio.Dotnet.Restore" class="dev.restudio.dotnet.project.DotnetRestoreAction"/>
       <action id="ReStudio.Dotnet.SyncModules" class="dev.restudio.dotnet.project.DotnetSyncModulesAction"/>
+    </group>
+    <group id="ReStudio.Dotnet.SolutionPopup">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
+      <action id="ReStudio.Dotnet.Build" class="dev.restudio.dotnet.solution.DotnetBuildAction" icon="AllIcons.Actions.Compile"/>
+      <action id="ReStudio.Dotnet.Rebuild" class="dev.restudio.dotnet.solution.DotnetRebuildAction"/>
+      <action id="ReStudio.Dotnet.Clean" class="dev.restudio.dotnet.solution.DotnetCleanAction"/>
+      <separator/>
+      <action id="ReStudio.Dotnet.SetStartupProject" class="dev.restudio.dotnet.solution.DotnetSetStartupProjectAction"/>
+      <action id="ReStudio.Dotnet.AddProjectReference" class="dev.restudio.dotnet.solution.DotnetAddProjectReferenceAction"/>
+      <action id="ReStudio.Dotnet.ManageNuGet" class="dev.restudio.dotnet.solution.DotnetManageNuGetAction" icon="AllIcons.Nodes.PpLib"/>
+      <action id="ReStudio.Dotnet.EditProjectFile" class="dev.restudio.dotnet.solution.DotnetEditProjectFileAction"/>
+      <separator/>
     </group>
   </actions>
 </idea-plugin>

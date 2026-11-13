@@ -16,13 +16,7 @@ class DotnetRunConfigurationProducer : LazyRunConfigurationProducer<DotnetRunCon
 
   override fun setupConfigurationFromContext(configuration: DotnetRunConfiguration, context: ConfigurationContext, sourceElement: Ref<PsiElement>): Boolean {
     val (project, file) = projectFor(context) ?: return false
-    DotnetLaunches.debug(project, file, LaunchSettings.select(LaunchSettings.read(project.directory), null))?.applyTo(configuration)
-    configuration.launchProfile = ""
-    configuration.appliedLaunchProfile = ""
-    configuration.projectFile = project.file.toString()
-    configuration.workingDirectory = project.directory.toString()
-    configuration.name = DotnetBundle.message("run.configuration.name", project.name)
-    configuration.beforeRunTasks = listOf(DotnetBuildBeforeRunTask())
+    setUp(configuration, project, file)
     return true
   }
 
@@ -34,5 +28,18 @@ class DotnetRunConfigurationProducer : LazyRunConfigurationProducer<DotnetRunCon
     if (entryPoint.kind != EntryPoint.Kind.MAIN) return null
     val project = DotnetProject.find(file) ?: return null
     return if (project.isExecutable) project to file.path else null
+  }
+
+  companion object {
+    /** Makes [configuration] run and debug [project]. [file] is the file of the entry point, or the project file. */
+    fun setUp(configuration: DotnetRunConfiguration, project: DotnetProject, file: String) {
+      DotnetLaunches.debug(project, file, LaunchSettings.select(LaunchSettings.read(project.directory), null))?.applyTo(configuration)
+      configuration.launchProfile = ""
+      configuration.appliedLaunchProfile = ""
+      configuration.projectFile = project.file.toString()
+      configuration.workingDirectory = project.directory.toString()
+      configuration.name = DotnetBundle.message("run.configuration.name", project.name)
+      configuration.beforeRunTasks = listOf(DotnetBuildBeforeRunTask())
+    }
   }
 }
