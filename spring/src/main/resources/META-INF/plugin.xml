@@ -4,7 +4,7 @@
   <vendor>ReStudio</vendor>
   <description><![CDATA[
     Spring and Spring Boot support on the Java code model: a bean model, autowiring inspections,
-    gutter navigation between beans and injection points, <code>application.properties</code> and
+    gutter navigation between beans and injection points, a bean dependency graph, <code>application.properties</code> and
     <code>application.yml</code> completion, and a Spring Boot run configuration.
   ]]></description>
 
@@ -53,5 +53,19 @@
     <configurationType implementation="dev.restudio.spring.boot.run.SpringBootConfigurationType"/>
     <runConfigurationProducer implementation="dev.restudio.spring.boot.run.SpringBootRunConfigurationProducer"/>
     <runConfigurationExtension implementation="dev.restudio.spring.boot.run.SpringBootRunConfigurationExtension"/>
+
+    <toolWindow id="SpringBeanGraph"
+                anchor="bottom"
+                icon="dev.restudio.spring.SpringIcons.BeanGraph"
+                canCloseContents="false"
+                doNotActivateOnStart="true"
+                factoryClass="dev.restudio.spring.graph.BeanGraphToolWindowFactory"/>
   </extensions>
+
+  <actions resource-bundle="messages.SpringBundle">
+    <action id="Restudio.Spring.ShowBeanGraph" class="dev.restudio.spring.graph.ShowBeanGraphAction">
+      <add-to-group group-id="ProjectViewPopupMenu" anchor="after" relative-to-action="ProjectViewPopupMenuRefactoringGroup"/>
+      <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+    </action>
+  </actions>
 </idea-plugin>

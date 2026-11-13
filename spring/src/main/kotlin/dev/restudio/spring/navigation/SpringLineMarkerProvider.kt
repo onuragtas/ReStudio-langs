@@ -9,9 +9,16 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiIdentifier
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.SmartPointerManager
+import com.intellij.psi.SmartPsiElementPointer
+import com.intellij.codeInsight.daemon.LineMarkerInfo
+import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
 import dev.restudio.spring.SpringBundle
 import dev.restudio.spring.SpringIcons
+import dev.restudio.spring.graph.ShowBeanGraphAction
 import dev.restudio.spring.inject.InjectionIndex
 import dev.restudio.spring.inject.InjectionPoints
 import dev.restudio.spring.model.SpringModels
@@ -49,6 +56,7 @@ class SpringLineMarkerProvider : RelatedItemLineMarkerProvider() {
       .setEmptyPopupText(SpringBundle.message("gutter.bean.empty"))
       .setAlignment(GutterIconRenderer.Alignment.LEFT)
       .createLineMarkerInfo(identifier)
+      .let { BeanLineMarkerInfo(it, SmartPointerManager.createPointer(definition)) }
   }
 
   private fun injectionMarker(identifier: PsiIdentifier): RelatedItemLineMarkerInfo<*>? {
@@ -62,5 +70,17 @@ class SpringLineMarkerProvider : RelatedItemLineMarkerProvider() {
       .setEmptyPopupText(SpringBundle.message("gutter.injection.empty"))
       .setAlignment(GutterIconRenderer.Alignment.LEFT)
       .createLineMarkerInfo(identifier)
+  }
+}
+
+/** The marker of a bean. It has the same targets as [base] and adds "Show Bean Graph" to the popup menu of the icon. */
+private class BeanLineMarkerInfo(base: RelatedItemLineMarkerInfo<PsiElement>, private val definition: SmartPsiElementPointer<PsiElement>) :
+  RelatedItemLineMarkerInfo<PsiElement>(
+    base.element!!, TextRange(base.startOffset, base.endOffset), base.icon,
+    { base.lineMarkerTooltip }, base.navigationHandler, GutterIconRenderer.Alignment.LEFT,
+    { base.createGotoRelatedItems() },
+  ) {
+  override fun createGutterRenderer(): GutterIconRenderer = object : LineMarkerInfo.LineMarkerGutterIconRenderer<PsiElement>(this) {
+    override fun getPopupMenuActions(): ActionGroup = DefaultActionGroup(ShowBeanGraphAction(definition))
   }
 }

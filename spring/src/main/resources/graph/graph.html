@@ -1,0 +1,44 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'">
+<style>
+/*STYLE*/
+</style>
+</head>
+<body>
+<svg id="canvas" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <marker id="arrow-RESOLVED" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrow resolved"/></marker>
+    <marker id="arrow-AMBIGUOUS" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrow ambiguous"/></marker>
+    <marker id="arrow-UNRESOLVED" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrow unresolved"/></marker>
+    <marker id="arrow-FACTORY" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="arrow factory"/></marker>
+  </defs>
+  <g id="viewport"><g id="edges"></g><g id="nodes"></g></g>
+</svg>
+<div id="empty"></div>
+<div id="status"></div>
+<div id="legend">
+  <div><svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" class="legend-line status-RESOLVED"/></svg><span data-label="legend.resolved"></span></div>
+  <div><svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" class="legend-line status-AMBIGUOUS"/></svg><span data-label="legend.ambiguous"></span></div>
+  <div><svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" class="legend-line status-UNRESOLVED"/></svg><span data-label="legend.unresolved"></span></div>
+  <div><svg width="28" height="8"><line x1="0" y1="4" x2="28" y2="4" class="legend-line status-FACTORY"/></svg><span data-label="legend.factory"></span></div>
+  <div><span class="swatch dependency"></span><span data-label="legend.dependency"></span></div>
+  <div><span class="swatch dependent"></span><span data-label="legend.dependent"></span></div>
+</div>
+<script>
+/*BRIDGE*/
+</script>
+<script>
+(function () {
+  var labels = window.beanGraphLabels || {};
+  document.querySelectorAll('[data-label]').forEach(function (node) { node.textContent = labels[node.getAttribute('data-label')] || ''; });
+  document.getElementById('empty').textContent = labels.empty || '';
+})();
+</script>
+<script>
+/*SCRIPT*/
+</script>
+</body>
+</html>

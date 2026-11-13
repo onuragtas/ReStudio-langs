@@ -1,0 +1,71 @@
+:root {
+  --bg: #ffffff;
+  --fg: #1f1f1f;
+  --muted: #6c707e;
+  --node-bg: #f7f8fa;
+  --node-border: #c9ccd6;
+  --library-bg: #ebecf0;
+  --edge: #8c8f99;
+  --accent: #3574f0;
+  --dependency: #3574f0;
+  --dependent: #208a3c;
+  --ambiguous: #e08855;
+  --unresolved: #e55765;
+  --match: #f2c55c;
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", sans-serif;
+  --font-size: 13px;
+}
+html, body { margin: 0; height: 100%; overflow: hidden; background: var(--bg); color: var(--fg); font-family: var(--font); font-size: var(--font-size); }
+#canvas { width: 100%; height: 100%; display: block; cursor: default; user-select: none; }
+#canvas.panning { cursor: grabbing; }
+#status { position: absolute; left: 8px; bottom: 6px; color: var(--muted); font-size: 0.9em; pointer-events: none; }
+#empty { position: absolute; top: 45%; width: 100%; text-align: center; color: var(--muted); display: none; pointer-events: none; }
+#legend { position: absolute; right: 8px; bottom: 6px; padding: 6px 8px; background: var(--bg); border: 1px solid var(--node-border);
+          border-radius: 6px; color: var(--muted); font-size: 0.85em; opacity: 0.92; }
+#legend div { display: flex; align-items: center; gap: 6px; line-height: 16px; }
+.swatch { display: inline-block; width: 28px; height: 8px; border-radius: 2px; }
+.swatch.dependency { background: var(--dependency); }
+.swatch.dependent { background: var(--dependent); }
+
+.node { cursor: pointer; }
+.node .box { fill: var(--node-bg); stroke: var(--node-border); stroke-width: 1; }
+.node .stripe { fill: var(--muted); }
+.node .name { fill: var(--fg); font-weight: 600; font-size: 12px; }
+.node .type { fill: var(--muted); font-size: 11px; }
+.node.library .box { fill: var(--library-bg); }
+.node.neighbor { opacity: 0.75; }
+.node.conditional .box { stroke-dasharray: 4 2; }
+.node.primary .box { stroke-width: 2; }
+.node.kind-COMPONENT .stripe { fill: #6db33f; }
+.node.kind-CONFIGURATION .stripe { fill: #3574f0; }
+.node.kind-BEAN_METHOD .stripe { fill: #a571e6; }
+.node.kind-REPOSITORY .stripe { fill: #d6ae58; }
+.node.kind-CONFIGURATION_PROPERTIES .stripe { fill: #50a3b5; }
+.node.kind-MISSING .box { fill: var(--bg); stroke: var(--unresolved); stroke-dasharray: 5 3; stroke-width: 1.5; }
+.node.kind-MISSING .stripe { fill: var(--unresolved); }
+.node.kind-MISSING .name { fill: var(--unresolved); }
+.node:hover .box { stroke: var(--accent); }
+.node.match .box { stroke: var(--match); stroke-width: 3; }
+.node.selected .box { stroke: var(--accent); stroke-width: 3; }
+.node.dependency .box { stroke: var(--dependency); stroke-width: 2; }
+.node.dependent .box { stroke: var(--dependent); stroke-width: 2; }
+.node.faded { opacity: 0.25; }
+
+.edge { cursor: pointer; }
+.edge .hit { fill: none; stroke: transparent; stroke-width: 10; }
+.edge .line { fill: none; stroke: var(--edge); stroke-width: 1.3; }
+.edge.status-AMBIGUOUS .line { stroke: var(--ambiguous); stroke-dasharray: 7 4; stroke-width: 1.8; }
+.edge.status-UNRESOLVED .line { stroke: var(--unresolved); stroke-dasharray: 3 3; stroke-width: 1.8; }
+.edge.status-FACTORY .line { stroke-dasharray: 1 3; stroke-linecap: round; }
+.edge:hover .line { stroke-width: 2.6; }
+.edge.dependency .line { stroke: var(--dependency); stroke-width: 2.2; }
+.edge.dependent .line { stroke: var(--dependent); stroke-width: 2.2; }
+.edge.faded { opacity: 0.12; }
+.arrow.resolved, .arrow.factory { fill: var(--edge); }
+.arrow.ambiguous { fill: var(--ambiguous); }
+.arrow.unresolved { fill: var(--unresolved); }
+
+.legend-line { stroke: var(--edge); stroke-width: 2; }
+.legend-line.status-AMBIGUOUS { stroke: var(--ambiguous); stroke-dasharray: 7 4; }
+.legend-line.status-UNRESOLVED { stroke: var(--unresolved); stroke-dasharray: 3 3; }
+.legend-line.status-FACTORY { stroke-dasharray: 1 3; stroke-linecap: round; }

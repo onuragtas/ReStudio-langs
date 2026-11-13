@@ -14,7 +14,11 @@ import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import dev.restudio.spring.boot.ConfigKeyInspection
 import dev.restudio.spring.boot.YamlConfigKeyInspection
+import dev.restudio.spring.graph.BeanGraphBuilder
+import dev.restudio.spring.graph.BeanGraphFilter
+import dev.restudio.spring.graph.EdgeStatus
 import dev.restudio.spring.inspection.SpringAutowiringInspection
+import dev.restudio.spring.model.SpringModels
 import java.io.File
 
 private val SAMPLE = File("../testdata/spring").absoluteFile
@@ -55,6 +59,35 @@ class PetclinicIntegrationTest : LightJavaCodeInsightFixtureTestCase() {
       .map { it.relativeTo(File(SAMPLE, "src/main/java")).invariantSeparatorsPath }.toList()
     val problems = (sources + listOf("application.properties", "application-dev.yml")).flatMap { path -> springProblems(path).map { "$path: $it" } }
     assertEmpty(problems)
+  }
+
+  fun `test the bean graph of the sample with the real Spring Boot jars`() {
+    if (!available) return println("Skipped: no jars in $LIBS")
+    val roots = SpringModels.roots(project).associateBy { it.name }
+    var start = System.nanoTime()
+    val casesContext = SpringModels.context(roots.getValue("CasesApplication"))
+    val petclinicContext = SpringModels.context(roots.getValue("PetClinicApplication"))
+    val model = (System.nanoTime() - start) / 1_000_000
+    start = System.nanoTime()
+    val cases = BeanGraphBuilder(casesContext).build().graph
+    val petclinic = BeanGraphBuilder(petclinicContext).build().graph
+    println("Bean graph: ${cases.nodes.size} + ${petclinic.nodes.size} nodes, ${cases.edges.size} + ${petclinic.edges.size} edges " +
+            "in ${(System.nanoTime() - start) / 1_000_000} ms; bean model $model ms")
+    start = System.nanoTime()
+    BeanGraphBuilder(petclinicContext).build()
+    println("Bean graph again: ${(System.nanoTime() - start) / 1_000_000} ms")
+    // The same problems as the inspection, as edges to missing nodes and ambiguous edges.
+    val problems = cases.edges.filter { it.from == "autowiringCases" && it.status != EdgeStatus.RESOLVED }
+      .map { "${it.to} ${it.status} ${it.points}" }.sorted()
+    assertEquals(listOf(
+      "mailNotifier AMBIGUOUS [ambiguous, mailNotifier]",
+      "missing:@org.springframework.beans.factory.annotation.Qualifier:pager UNRESOLVED [unknownQualifier]",
+      "missing:org.restudio.cases.NotABean UNRESOLVED [missing]",
+      "missing:org.springframework.web.client.RestTemplate UNRESOLVED [restTemplate]",
+      "smsNotifier AMBIGUOUS [ambiguous, qualified]",
+    ), problems)
+    assertEmpty(petclinic.edges.filter { it.status != EdgeStatus.RESOLVED })
+    assertTrue(petclinic.filter(BeanGraphFilter()).edges.any { it.from == "ownerController" && it.to == "ownerRepository" })
   }
 
   fun `test the cases give the results of IntelliJ IDEA Ultimate`() {

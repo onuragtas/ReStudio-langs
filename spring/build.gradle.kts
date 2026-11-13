@@ -20,6 +20,8 @@ dependencies {
     bundledPlugin("com.intellij.java")
     bundledPlugin("com.intellij.properties")
     bundledPlugin("org.jetbrains.plugins.yaml")
+    bundledModule("intellij.platform.ui.jcef")
+    bundledModule("intellij.libraries.jcef")
     testFramework(TestFrameworkType.Platform)
     testFramework(TestFrameworkType.Plugin.Java)
   }
