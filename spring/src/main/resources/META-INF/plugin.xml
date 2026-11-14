@@ -12,6 +12,7 @@
   <depends>com.intellij.java</depends>
   <depends>com.intellij.properties</depends>
   <depends>org.jetbrains.plugins.yaml</depends>
+  <depends>com.intellij.modules.jcef</depends>
 
   <resource-bundle>messages.SpringBundle</resource-bundle>
 
