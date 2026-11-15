@@ -5,8 +5,10 @@ import dev.restudio.core.dap.DapLaunch
 import dev.restudio.core.dap.jsonObject
 import dev.restudio.core.entrypoints.EntryPoint
 import dev.restudio.core.sdk.ToolLocator
+import dev.restudio.core.sdk.install.ToolInstaller
 import dev.restudio.go.GoBundle
 import dev.restudio.go.debug.DelveDescriptorFactory
+import dev.restudio.go.sdk.GoTools
 
 /** Builds the Delve launch for a Go entry point. */
 object GoLaunches {
@@ -19,7 +21,7 @@ object GoLaunches {
   fun create(file: VirtualFile, entryPoint: EntryPoint): Pair<String, DapLaunch> {
     val packageDir = file.parent.path
     val moduleRoot = moduleRoot(file)?.path ?: packageDir
-    val dlv = ToolLocator.find("dlv")?.toString() ?: "dlv"
+    val dlv = ToolInstaller.findOrOffer(null, GoTools.DLV)?.toString() ?: "dlv"
     val environment = mapOf("PATH" to ToolLocator.childPath())
     return when (entryPoint.kind) {
       EntryPoint.Kind.MAIN -> GoBundle.message("run.configuration.main", file.parent.name) to application(
@@ -64,7 +66,7 @@ object GoLaunches {
     arguments: List<String>,
     environment: Map<String, String>,
   ): DapLaunch {
-    val dlv = ToolLocator.find("dlv")?.toString() ?: "dlv"
+    val dlv = ToolInstaller.findOrOffer(null, GoTools.DLV)?.toString() ?: "dlv"
     val launch = mutableListOf<Pair<String, Any>>(
       "type" to "go",
       "name" to name,

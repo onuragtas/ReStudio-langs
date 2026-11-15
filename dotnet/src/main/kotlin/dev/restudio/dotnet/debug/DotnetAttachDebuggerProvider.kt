@@ -45,7 +45,7 @@ class DotnetAttachDebuggerProvider : XAttachDebuggerProvider {
 
     /** A temporary configuration that attaches to [info]. */
     fun createSettings(project: Project, info: ProcessInfo): RunnerAndConfigurationSettings {
-      val netcoredbg = DotnetSdk.netcoredbg() ?: throw ExecutionException(DotnetBundle.message("netcoredbg.not.found"))
+      val netcoredbg = DotnetSdk.netcoredbg(project) ?: throw ExecutionException(DotnetBundle.message("netcoredbg.not.found"))
       val name = DotnetBundle.message("attach.configuration.name", info.executableDisplayName, info.pid)
       val settings = RunManager.getInstance(project).createConfiguration(name, DotnetAttachConfigurationType.getInstance().configurationFactories.single())
       val configuration = settings.configuration as DotnetAttachConfiguration

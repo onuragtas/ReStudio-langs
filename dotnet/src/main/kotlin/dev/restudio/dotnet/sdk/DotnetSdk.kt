@@ -1,6 +1,8 @@
 package dev.restudio.dotnet.sdk
 
+import com.intellij.openapi.project.Project
 import dev.restudio.core.sdk.ToolLocator
+import dev.restudio.core.sdk.install.ToolInstaller
 import java.nio.file.Files
 import java.nio.file.Path
 
@@ -36,13 +38,11 @@ object DotnetSdk {
     root()?.let { put("DOTNET_ROOT", it.toString()) }
   }
 
-  /** Finds netcoredbg on the PATH, or else in the newest `~/.restudio-dev/tools/netcoredbg/<version>` directory. */
-  fun netcoredbg(): Path? {
-    ToolLocator.find("netcoredbg")?.let { return it }
-    val tools = Path.of(System.getProperty("user.home"), ".restudio-dev/tools/netcoredbg")
-    if (!Files.isDirectory(tools)) return null
-    return Files.list(tools).use { versions ->
-      versions.sorted(Comparator.reverseOrder()).map { it.resolve("netcoredbg/netcoredbg") }.filter { Files.isExecutable(it) }.findFirst().orElse(null)
-    }
-  }
+  /**
+   * Finds netcoredbg as [ToolLocator] does. When the pinned version is missing, it offers to install it.
+   *
+   * [project] is the project for the notification. With `null`, the notification goes to the active window.
+   */
+  fun netcoredbg(project: Project? = null): Path? = ToolInstaller.findOrOffer(project, DotnetTools.NETCOREDBG)
+
 }

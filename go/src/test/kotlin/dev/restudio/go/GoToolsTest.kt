@@ -15,4 +15,12 @@ class GoToolsTest : BasePlatformTestCase() {
     assertEquals("gopls", recipe.executable)
     assertTrue(ToolInstaller.versionDirectory(tool, recipe).endsWith("gopls/${recipe.version}"))
   }
+
+  fun `test the plugin registers Delve with its pinned recipe`() {
+    val tool = ToolRegistry.find("dlv")
+    assertSame(GoTools.DLV, tool)
+    val recipe = tool!!.recipe as InstallRecipe.GoInstall
+    assertEquals("github.com/go-delve/delve/cmd/dlv", recipe.module)
+    assertEquals("dlv", recipe.executable)
+  }
 }
