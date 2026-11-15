@@ -9,8 +9,10 @@ import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
 import dev.restudio.core.lsp.TracingClientFeatures
+import dev.restudio.core.lsp.ManagedServers
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.dotnet.sdk.DotnetSdk
+import dev.restudio.dotnet.sdk.DotnetTools
 import dev.restudio.dotnet.settings.CSharpServer
 import dev.restudio.dotnet.settings.DotnetSettings
 import org.eclipse.lsp4j.services.LanguageServer
@@ -19,9 +21,9 @@ import java.nio.file.Path
 /**
  * Starts the C# language server.
  *
- * The default is Roslyn LS, the C# language server of Microsoft. Install it with
- * `dotnet tool install -g roslyn-language-server --prerelease`. When Roslyn LS is not installed, or when the user
- * selects it in the settings, the factory starts csharp-ls (`dotnet tool install -g csharp-ls`).
+ * The default is Roslyn LS, the C# language server of Microsoft. When it is missing, the user gets an offer to install
+ * the pinned version ([DotnetTools.ROSLYN]). When only csharp-ls is installed, or when the user selects it in the
+ * settings, the factory starts csharp-ls.
  * csharp-ls loads the solution from `--solution` and needs no `solution/open` notification (LSP probe, case csharp-ls).
  */
 class RoslynServerFactory : LanguageServerFactory {
@@ -29,7 +31,7 @@ class RoslynServerFactory : LanguageServerFactory {
     val commandLine = when (selectedServer()) {
       CSharpServer.CSHARP_LS -> csharpLsCommandLine(project)
       else -> {
-        val server = ToolLocator.find(ROSLYN) ?: Path.of(ROSLYN)
+        val server = ManagedServers.find(project, DotnetTools.ROSLYN, SERVER_ID) ?: Path.of(DotnetTools.ROSLYN.executable)
         val logDirectory = Path.of(PathManager.getLogPath(), "roslyn")
         GeneralCommandLine(server.toString(), "--stdio", "--logLevel", "Information", "--extensionLogDirectory", logDirectory.toString())
       }
@@ -47,7 +49,7 @@ class RoslynServerFactory : LanguageServerFactory {
   override fun createClientFeatures(): LSPClientFeatures = TracingClientFeatures()
 
   private fun csharpLsCommandLine(project: Project): GeneralCommandLine {
-    val server = ToolLocator.find(CSHARP_LS) ?: Path.of(CSHARP_LS)
+    val server = ManagedServers.find(project, DotnetTools.CSHARP_LS, SERVER_ID) ?: Path.of(DotnetTools.CSHARP_LS.executable)
     val commandLine = GeneralCommandLine(server.toString())
     val solution = project.basePath?.let { RoslynWorkspace.find(Path.of(it)) } as? RoslynWorkspace.Solution
     if (solution != null) commandLine.addParameters("--solution", solution.file.fileName.toString())
@@ -55,12 +57,12 @@ class RoslynServerFactory : LanguageServerFactory {
   }
 
   companion object {
-    private const val ROSLYN = "roslyn-language-server"
-    private const val CSHARP_LS = "csharp-ls"
+    /** The `id` of the `server` entry in `plugin.xml`. */
+    const val SERVER_ID: String = "restudio.roslyn"
 
     /** The server for [CSharpServer.AUTO] is Roslyn LS when it is installed, else csharp-ls when that is installed. */
     fun selectedServer(): CSharpServer = when (val choice = DotnetSettings.getInstanceOrNull()?.server ?: CSharpServer.AUTO) {
-      CSharpServer.AUTO -> if (ToolLocator.find(ROSLYN) == null && ToolLocator.find(CSHARP_LS) != null) CSharpServer.CSHARP_LS else CSharpServer.ROSLYN
+      CSharpServer.AUTO -> if (ToolLocator.find(DotnetTools.ROSLYN) == null && ToolLocator.find(DotnetTools.CSHARP_LS) != null) CSharpServer.CSHARP_LS else CSharpServer.ROSLYN
       else -> choice
     }
   }

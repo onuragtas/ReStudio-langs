@@ -6,7 +6,9 @@ import com.redhat.devtools.lsp4ij.LanguageServerFactory
 import com.redhat.devtools.lsp4ij.client.features.LSPClientFeatures
 import com.redhat.devtools.lsp4ij.server.OSProcessStreamConnectionProvider
 import com.redhat.devtools.lsp4ij.server.StreamConnectionProvider
+import dev.restudio.core.lsp.ManagedServers
 import dev.restudio.php.sdk.PhpSdk
+import dev.restudio.php.sdk.PhpTools
 import dev.restudio.php.settings.PhpLanguageServer
 import dev.restudio.php.settings.PhpSettings
 import java.nio.file.Path
@@ -15,12 +17,13 @@ import java.nio.file.Path
  * Starts the PHP language server that [PhpSettings] selects.
  *
  * Phpactor is the default. It is MIT-licensed and reads `composer.json` by itself.
+ * When it is missing, the user gets an offer to install the pinned PHAR ([PhpTools.PHPACTOR]).
  * Intelephense is optional. The user installs it with npm.
  */
 class PhpServerFactory : LanguageServerFactory {
   override fun createConnectionProvider(project: Project): StreamConnectionProvider {
     val command = when (PhpSettings.getInstance().languageServer) {
-      PhpLanguageServer.PHPACTOR -> (PhpSdk.phpactor() ?: listOf("phpactor")) + "language-server"
+      PhpLanguageServer.PHPACTOR -> PhpSdk.phpactorCommand(ManagedServers.find(project, PhpTools.PHPACTOR, SERVER_ID)) + "language-server"
       PhpLanguageServer.INTELEPHENSE -> listOf(PhpSdk.intelephense()?.toString() ?: "intelephense", "--stdio")
     }
     val commandLine = GeneralCommandLine(command).withEnvironment(PhpSdk.environment())

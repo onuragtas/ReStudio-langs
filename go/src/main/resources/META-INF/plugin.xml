@@ -24,6 +24,10 @@
                         factoryClass="dev.restudio.go.debug.DelveDescriptorFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="dev.restudio.core">
+    <toolProvider implementation="dev.restudio.go.sdk.GoToolProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <codeInsight.lineMarkerProvider language="textmate"
                                     implementationClass="dev.restudio.go.run.GoLineMarkerProvider"/>

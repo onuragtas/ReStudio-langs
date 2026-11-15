@@ -26,6 +26,10 @@
                         factoryClass="dev.restudio.dotnet.debug.NetcoredbgDescriptorFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="dev.restudio.core">
+    <toolProvider implementation="dev.restudio.dotnet.sdk.DotnetToolProvider"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij">
     <!-- The platform maps *.cs to its built-in "C#" custom file type (defaultFileTypes.xml), whose language is TEXT.
          A *.csx or *.cake file goes to TextMate. -->

@@ -13,12 +13,14 @@ object PhpSdk {
 
   fun node(): Path? = ToolLocator.find("node")
 
-  /** `phpactor` on the PATH, or else the newest `~/.restudio-dev/tools/phpactor/<version>/phpactor.phar`. */
-  fun phpactor(): List<String>? {
-    ToolLocator.find("phpactor")?.let { return listOf(it.toString()) }
-    val phar = newest("phpactor", "phpactor.phar") ?: return null
-    val php = php() ?: return null
-    return listOf(php.toString(), phar.toString())
+  /**
+   * The command that starts Phpactor at [path]. PHP runs a PHAR file.
+   * When [path] is `null`, the command is `phpactor`, and the start fails with a clear error.
+   */
+  fun phpactorCommand(path: Path?): List<String> = when {
+    path == null -> listOf(PhpTools.PHPACTOR.executable)
+    path.fileName.toString().endsWith(".phar") -> listOf(php()?.toString() ?: "php", path.toString())
+    else -> listOf(path.toString())
   }
 
   /** `intelephense` on the PATH. Install it with `npm install -g intelephense`. */
