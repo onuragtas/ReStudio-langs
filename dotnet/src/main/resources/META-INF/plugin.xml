@@ -14,6 +14,11 @@
   <depends>dev.restudio.core</depends>
   <depends>org.jetbrains.plugins.textmate</depends>
 
+  <extensions defaultExtensionNs="com.intellij">
+    <!-- The *.cs name gives the TextMate file type also without a file on disk, for example for a new file in a diff. -->
+    <fileType name="textmate" extensions="cs"/>
+  </extensions>
+
   <extensions defaultExtensionNs="com.redhat.devtools.lsp4ij">
     <server id="restudio.roslyn"
             name="Roslyn LS (ReStudio)"
