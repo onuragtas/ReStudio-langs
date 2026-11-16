@@ -3,7 +3,14 @@ package dev.restudio.php.lsp
 import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import dev.restudio.core.lsp.TracingClientFeatures
+import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.openapi.vfs.VirtualFile
 import dev.restudio.php.PhpBundle
+import dev.restudio.php.docker.PhpDocker
+import dev.restudio.php.docker.PhpDockerTarget
+import dev.restudio.php.docker.fileUri
+import org.eclipse.lsp4j.InitializeParams
+import org.eclipse.lsp4j.WorkspaceFolder
 import org.eclipse.lsp4j.ApplyWorkspaceEditParams
 import org.eclipse.lsp4j.CreateFile
 import org.eclipse.lsp4j.DeleteFile
@@ -18,6 +25,7 @@ import org.eclipse.lsp4j.jsonrpc.messages.Message
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
 import org.eclipse.lsp4j.services.LanguageServer
+import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 
 /**
@@ -26,12 +34,39 @@ import java.util.concurrent.ConcurrentHashMap
  * Phpactor renames a symbol also in the Composer packages, for example in the Laravel sources (see the plan).
  * The packages belong to Composer, so the IDE must not change them. The filter looks at the `textDocument/rename`
  * responses and at the `workspace/applyEdit` requests. It tells the user how many files it left unchanged.
+ *
+ * When Phpactor runs in a Docker container ([PhpDocker]), the class also maps the file URIs. The server gets the
+ * container paths, and the IDE gets the host paths back.
  */
 class PhpClientFeatures : TracingClientFeatures() {
   private val renameRequests: MutableSet<String> = ConcurrentHashMap.newKeySet()
 
   override fun <S : LanguageServer> createLauncherBuilder(): Launcher.Builder<S> =
     super.createLauncherBuilder<S>().wrapMessages { consumer -> MessageConsumer { message -> consumer.consume(filter(message)) } }
+
+  private val dockerTarget: PhpDockerTarget? by lazy { PhpDocker.target(project) }
+
+  override fun getFileUri(file: VirtualFile): URI? =
+    dockerTarget?.containerUri(file.path) ?: super.getFileUri(file)
+
+  override fun findFileByUri(fileUri: String): VirtualFile? {
+    val hostPath = dockerTarget?.hostPath(fileUri) ?: return super.findFileByUri(fileUri)
+    return LocalFileSystem.getInstance().findFileByPath(hostPath)
+  }
+
+  override fun initializeParams(initializeParams: InitializeParams) {
+    super.initializeParams(initializeParams)
+    val target = dockerTarget ?: return
+    val rootUri = fileUri(target.containerRoot).toString()
+    initializeParams.rootUri = rootUri
+    @Suppress("DEPRECATION")
+    initializeParams.rootPath = target.containerRoot
+    // The workspace folders come with the host URIs. A folder outside the project stays as it is.
+    initializeParams.workspaceFolders = initializeParams.workspaceFolders?.map { folder ->
+      val hostPath = runCatching { URI(folder.uri).path }.getOrNull()
+      WorkspaceFolder(hostPath?.let(target::containerUri)?.toString() ?: folder.uri, folder.name)
+    }
+  }
 
   private fun filter(message: Message): Message {
     when (message) {

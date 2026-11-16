@@ -48,6 +48,10 @@
                              id="dev.restudio.php"
                              instance="dev.restudio.php.settings.PhpConfigurable"
                              key="settings.display.name"/>
+    <projectConfigurable parentId="dev.restudio.php"
+                         id="dev.restudio.php.docker"
+                         instance="dev.restudio.php.docker.PhpDockerConfigurable"
+                         key="docker.settings.display.name"/>
     <newProjectWizard.generator implementation="dev.restudio.php.wizard.PhpNewProjectWizard"/>
 
     <postStartupActivity implementation="dev.restudio.php.project.ComposerRootsActivity"/>

@@ -14,17 +14,17 @@ object PhpSdk {
   fun node(): Path? = ToolLocator.find("node")
 
   /**
-   * The command that starts Phpactor at [path]. PHP runs a PHAR file.
+   * The command that starts Phpactor at [path]. [php] runs a PHAR file.
    * When [path] is `null`, the command is `phpactor`, and the start fails with a clear error.
    */
-  fun phpactorCommand(path: Path?): List<String> = when {
+  fun phpactorCommand(path: Path?, php: Path? = php()): List<String> = when {
     path == null -> listOf(PhpTools.PHPACTOR.executable)
-    path.fileName.toString().endsWith(".phar") -> listOf(php()?.toString() ?: "php", path.toString())
+    path.fileName.toString().endsWith(".phar") -> listOf(php?.toString() ?: "php", path.toString())
     else -> listOf(path.toString())
   }
 
-  /** `intelephense` on the PATH. Install it with `npm install -g intelephense`. */
-  fun intelephense(): Path? = ToolLocator.find("intelephense")
+  /** Intelephense as [ToolLocator] finds it: the user override, the pinned version or the PATH. */
+  fun intelephense(): Path? = ToolLocator.find(PhpTools.INTELEPHENSE)
 
   /** `composer` on the PATH. */
   fun composer(): Path? = ToolLocator.find("composer")
