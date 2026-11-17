@@ -43,6 +43,8 @@
     <pluginAdvertiserSuppressor implementation="dev.restudio.php.ide.PhpAdvertiserSuppressor"/>
     <!-- A Cmd+click on a declaration shows the usages. -->
     <psi.declarationProvider implementation="dev.restudio.php.lsp.PhpDeclarationProvider"/>
+    <!-- The breadcrumbs and the sticky lines come from the blocks, also the closures and the statements. -->
+    <fileBreadcrumbsCollector order="first" implementation="dev.restudio.php.ide.PhpBreadcrumbsCollector"/>
     <!-- PHP CS Fixer or Pint comes before the language server formatting, but only when the project has one. -->
     <formattingService order="first" implementation="dev.restudio.php.ide.PhpFormattingService"/>
     <notificationGroup id="ReStudio PHP" displayType="BALLOON" key="notification.group.name"/>
