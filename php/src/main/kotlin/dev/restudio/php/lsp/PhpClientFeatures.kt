@@ -6,6 +6,7 @@ import dev.restudio.core.lsp.TracingClientFeatures
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import dev.restudio.php.PhpBundle
+import dev.restudio.php.docker.ContainerUris
 import dev.restudio.php.docker.PhpDocker
 import dev.restudio.php.docker.PhpDockerTarget
 import dev.restudio.php.docker.fileUri
@@ -17,14 +18,13 @@ import org.eclipse.lsp4j.DeleteFile
 import org.eclipse.lsp4j.RenameFile
 import org.eclipse.lsp4j.ResourceOperation
 import org.eclipse.lsp4j.TextDocumentEdit
+import org.eclipse.lsp4j.TextDocumentPositionParams
 import org.eclipse.lsp4j.WorkspaceEdit
-import org.eclipse.lsp4j.jsonrpc.Launcher
-import org.eclipse.lsp4j.jsonrpc.MessageConsumer
 import org.eclipse.lsp4j.jsonrpc.messages.Either
 import org.eclipse.lsp4j.jsonrpc.messages.Message
+import org.eclipse.lsp4j.jsonrpc.messages.NotificationMessage
 import org.eclipse.lsp4j.jsonrpc.messages.RequestMessage
 import org.eclipse.lsp4j.jsonrpc.messages.ResponseMessage
-import org.eclipse.lsp4j.services.LanguageServer
 import java.net.URI
 import java.util.concurrent.ConcurrentHashMap
 
@@ -40,9 +40,6 @@ import java.util.concurrent.ConcurrentHashMap
  */
 class PhpClientFeatures : TracingClientFeatures() {
   private val renameRequests: MutableSet<String> = ConcurrentHashMap.newKeySet()
-
-  override fun <S : LanguageServer> createLauncherBuilder(): Launcher.Builder<S> =
-    super.createLauncherBuilder<S>().wrapMessages { consumer -> MessageConsumer { message -> consumer.consume(filter(message)) } }
 
   private val dockerTarget: PhpDockerTarget? by lazy { PhpDocker.target(project) }
 
@@ -68,13 +65,28 @@ class PhpClientFeatures : TracingClientFeatures() {
     }
   }
 
-  private fun filter(message: Message): Message {
+  override fun filterMessage(message: Message): Message {
+    val definition = (message as? RequestMessage)?.takeIf { it.method == DEFINITION }?.params as? TextDocumentPositionParams
+    val hostUri = definition?.textDocument?.uri
+    // The filter sees the messages in both directions. The server sends only container URIs, so the change does nothing there.
+    dockerTarget?.let { target ->
+      when (message) {
+        is RequestMessage -> ContainerUris.toContainer(message.params, target)
+        is NotificationMessage -> ContainerUris.toContainer(message.params, target)
+      }
+    }
     when (message) {
       is RequestMessage -> when (message.method) {
         RENAME -> renameRequests += message.id
         APPLY_EDIT -> (message.params as? ApplyWorkspaceEditParams)?.edit?.let(::removeVendorEdits)
+        DEFINITION -> if (definition != null && hostUri != null) {
+          PhpDeclarations.getInstance(project).request(message.id, hostUri, definition.textDocument.uri, definition.position)
+        }
       }
-      is ResponseMessage -> if (renameRequests.remove(message.id)) (message.result as? WorkspaceEdit)?.let(::removeVendorEdits)
+      is ResponseMessage -> {
+        if (renameRequests.remove(message.id)) (message.result as? WorkspaceEdit)?.let(::removeVendorEdits)
+        PhpDeclarations.getInstance(project).response(message.id, message.result)
+      }
     }
     return message
   }
@@ -91,6 +103,7 @@ class PhpClientFeatures : TracingClientFeatures() {
     const val NOTIFICATION_GROUP: String = "ReStudio PHP"
     private const val RENAME = "textDocument/rename"
     private const val APPLY_EDIT = "workspace/applyEdit"
+    private const val DEFINITION = "textDocument/definition"
   }
 }
 

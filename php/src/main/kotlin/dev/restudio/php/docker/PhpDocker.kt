@@ -7,6 +7,9 @@ import com.intellij.notification.NotificationType
 import com.intellij.openapi.project.Project
 import dev.restudio.core.sdk.ToolLocator
 import dev.restudio.php.PhpBundle
+import org.eclipse.lsp4j.DidChangeWatchedFilesParams
+import org.eclipse.lsp4j.TextDocumentIdentifier
+import java.lang.reflect.Method
 import java.net.URI
 import java.nio.file.Path
 
@@ -32,12 +35,45 @@ data class PhpDockerTarget(val container: String, val hostRoot: String, val cont
     return parsed.path?.let(::toHost)
   }
 
+  /** The container URI for the `file:` URI [uri] of a host file, or `null` when the URI is not under [hostRoot]. */
+  fun toContainerUri(uri: String): String? {
+    val parsed = runCatching { URI(uri) }.getOrNull() ?: return null
+    if (parsed.scheme != "file") return null
+    return parsed.path?.let(::containerUri)?.toString()
+  }
+
   private fun map(path: String, from: String, to: String): String? {
     val root = from.trimEnd('/')
     return when {
       path == root -> to.trimEnd('/').ifEmpty { "/" }
       path.startsWith("$root/") -> to.trimEnd('/') + path.substring(root.length)
       else -> null
+    }
+  }
+}
+
+/**
+ * Changes the host URIs in the parameters of a message to the language server into container URIs.
+ *
+ * LSP4IJ uses [com.redhat.devtools.lsp4ij.client.features.FileUriSupport] only for the opened documents. The requests,
+ * for example `textDocument/definition`, still contain the host URI. Phpactor does not know that URI, so the request fails.
+ */
+object ContainerUris {
+  private val textDocumentGetter = object : ClassValue<Method?>() {
+    override fun computeValue(type: Class<*>): Method? =
+      runCatching { type.getMethod("getTextDocument") }.getOrNull()
+        ?.takeIf { TextDocumentIdentifier::class.java.isAssignableFrom(it.returnType) }
+  }
+
+  /** Changes [params] in place. A URI outside [PhpDockerTarget.hostRoot] stays as it is. */
+  fun toContainer(params: Any?, target: PhpDockerTarget) {
+    when (params) {
+      null -> return
+      is DidChangeWatchedFilesParams -> params.changes?.forEach { change -> change.uri = target.toContainerUri(change.uri) ?: change.uri }
+      else -> {
+        val document = textDocumentGetter.get(params.javaClass)?.invoke(params) as? TextDocumentIdentifier ?: return
+        document.uri = target.toContainerUri(document.uri) ?: document.uri
+      }
     }
   }
 }
